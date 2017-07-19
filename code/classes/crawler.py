@@ -99,6 +99,13 @@ class Crawler:
         json_data = open(self.data_folder + 'misc/styles_links.json').read()
         data = json.loads(json_data)
 
+        folder = self.data_folder + 'styles/'
+        # Create folder for all the HTML pages
+        if os.path.exists(folder):
+            shutil.rmtree(folder)
+
+        os.mkdir(folder)
+
         pool = mp.Pool(processes=self.threads)
 
         for key in data.keys():
@@ -149,7 +156,72 @@ class Crawler:
             with open(folder + str(val) + '.html', 'wb') as output:
                 output.write(r.content)
 
+    def crawl_all_beers(self):
+        """
+        STEP 5
 
+        Crawl all the reviews from all the beers.
+
+        !!! Make sure step 4 was done with the parser !!!
+        """
+
+        df = pd.read_csv(self.data_folder + 'parsed/beers.csv')
+
+        folder = self.data_folder + 'beers/'
+        # Create folder for all the HTML pages
+        if os.path.exists(folder):
+            shutil.rmtree(folder)
+
+        os.mkdir(folder)
+
+        pool = mp.Pool(processes=self.threads)
+
+        for i in df.index:
+            row = df.ix[i]
+            res = pool.apply_async(self.crawl_one_beer, args=(row['brewery_id'], row['beer_id']))
+        pool.close()
+        pool.join()
+
+    def crawl_one_beer(self, brewery_id, beer_id):
+        """
+        USED BY STEP 5
+
+        Crawl all the reviews from one beer
+
+        :param brewery_id: ID of the brewery
+        :param beer_id: ID of the beer
+        """
+
+        # Create the folder
+        folder = self.data_folder + 'beers/{:d}/{:d}/'.format(brewery_id, beer_id)
+        os.makedirs(folder)
+
+        # First URL
+        url = 'https://www.beeradvocate.com/beer/profile/{:d}/{:d}'.format(brewery_id, beer_id)
+
+        # Get it and write it
+        r = requests.get(url)
+        with open(folder + '0.html', 'wb') as output:
+            output.write(r.content)
+
+        # Parse it to get the number of Ratings
+        html = r.content
+        str_ = '</i> Ratings: (.+?)</b>'
+        grp = re.search(str_, str(html))
+        if grp is not None:
+            nbr = int(grp.group(1).replace(',', ''))
+
+            # Get all the pages with the reviews and ratings
+            step = 25
+
+            for i in range(1, int(round_(nbr, 25) / step) + 1):
+                tmp = i * step
+                url_tmp = url + '/?view=beer&sort=&start=' + str(tmp)
+
+                r = requests.get(url_tmp)
+
+                with open(folder + str(tmp) + '.html', 'wb') as output:
+                    output.write(r.content)
 
 
 

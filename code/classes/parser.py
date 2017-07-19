@@ -7,6 +7,7 @@
 
 import multiprocessing as mp
 import pandas as pd
+import shutil
 import json
 import re
 import os
@@ -42,6 +43,8 @@ class Parser:
 
     def parse_beers_from_styles(self):
         """
+        STEP 4
+
         Parse the beers from the styles pages. The resulting data are put into a pandas DF.
         
         !!! Make sure steps 1, 2 and 3 were done with the crawler !!!
@@ -57,6 +60,13 @@ class Parser:
         folders = {}
         for st in styles:
             folders[st] = st.replace(' / ', '-').replace(' ', '_')
+
+        folder = self.data_folder + 'parsed/'
+        # Create folder for the parsed CSV tables
+        if os.path.exists(folder):
+            shutil.rmtree(folder)
+
+        os.mkdir(folder)
 
         # Multiprocess the parsing
         pool = mp.Pool(processes=self.threads)
@@ -86,8 +96,7 @@ class Parser:
         list_files = os.listdir(self.data_folder + 'styles/' + folder)
 
         # Prepare JSON for all the files
-        json_beers = {'beer_name': [], 'brewery_name': [], 'beer_id': [], 'brewery_id': [], 'style': [],
-                      'nbr_reviews': []}
+        json_beers = {'beer_name': [], 'brewery_name': [], 'beer_id': [], 'brewery_id': [], 'style': []}
 
         # Read the files
         for file_ in list_files:
@@ -109,8 +118,6 @@ class Parser:
                 json_beers['beer_id'].append(int(g.group(2)))
                 json_beers['beer_name'].append(g.group(3))
                 json_beers['brewery_name'].append(g.group(5))
-                nbr = int(g.group(8).replace(',', ''))
-                json_beers['nbr_reviews'].append(nbr)
                 json_beers['style'].append(style)
 
         # Create the pandas DF

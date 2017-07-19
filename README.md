@@ -10,7 +10,7 @@ into iterators in Python.
 
 ## Dates and Time when the data were scraped
 
-* The beers (names) have been scraped on the 18th of July 2017, starting at 9:00pm.
+* The beers and their reviews have been scraped on the 19th of July 2017, starting at 2:30pm. It took around XX minutes.
 
 ## Required packages
 

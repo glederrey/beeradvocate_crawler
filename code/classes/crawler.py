@@ -44,7 +44,7 @@ class Crawler:
 
     ########################################################################################
     ##                                                                                    ##
-    ##                          Crawl the beers and the reviews                           ##
+    ##                                Crawl the beers                                     ##
     ##                                                                                    ##
     ########################################################################################
 
@@ -156,6 +156,62 @@ class Crawler:
             with open(folder + str(val) + '.html', 'wb') as output:
                 output.write(r.content)
 
+    ########################################################################################
+    ##                                                                                    ##
+    ##                           Crawl the archived beers                                 ##
+    ##                                                                                    ##
+    ########################################################################################
+
+    def crawl_all_breweries(self):
+        """
+        STEP 5
+
+        Crawl all the breweries from the ones we have.
+        (We are missing some breweries with only archived beers, but that's not a problem)
+
+        !!! Make sure step 4 was done with the parser !!!
+        """
+
+        df = pd.read_csv(self.data_folder + 'parsed/beers.csv')
+
+        folder = self.data_folder + 'breweries/'
+        # Create folder for all the HTML pages
+        if os.path.exists(folder):
+            shutil.rmtree(folder)
+
+        os.mkdir(folder)
+
+        brewery_ids = list(df['brewery_id'].unique())
+
+        pool = mp.Pool(processes=self.threads)
+
+        for id_ in brewery_ids:
+            res = pool.apply_async(self.crawl_one_brewery, args=(id_,))
+        res.get()
+        pool.close()
+        pool.join()
+
+    def crawl_one_brewery(self, brewery_id):
+        """
+        USED BY STEP 5
+
+        Crawl the page of the brewery
+
+        :param brewery_id: ID of the brewery
+        """
+
+        folder = self.data_folder + 'breweries/'
+
+        # URL
+        url = 'https://www.beeradvocate.com/beer/profile/{:d}/?view=beers&show=all'.format(brewery_id)
+
+        # Get the HTML page
+        r = requests.get(url)
+
+        # Save it
+        with open(folder + str(brewery_id) + '.html', 'wb') as output:
+            output.write(r.content)
+
     def crawl_all_beers(self):
         """
         STEP 5
@@ -178,7 +234,7 @@ class Crawler:
 
         for i in df.index:
             row = df.ix[i]
-            res = pool.apply_async(self.crawl_one_beer, args=(row['brewery_id'], row['beer_id']))
+            pool.apply_async(self.crawl_one_beer, args=(row['brewery_id'], row['beer_id']))
         pool.close()
         pool.join()
 

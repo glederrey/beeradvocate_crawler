@@ -103,3 +103,4 @@ ENV/
 # SPECIFIC TO THE PROJECT
 .idea
 /data
+/code/log*.txt

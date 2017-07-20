@@ -9,8 +9,11 @@ from classes.crawler import *
 from classes.parser import *
 import time
 import datetime
+import os
 
 def run():
+
+    os.makedirs('../data')
 
     start = time.time()
 
@@ -32,7 +35,7 @@ def run():
 
     # Crawl all the ratings
     print('Crawling all the ratings...')
-    crawler.crawl_all_beers()
+    #crawler.crawl_all_beers()
 
     stop = time.time()
 

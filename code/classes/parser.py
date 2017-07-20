@@ -133,7 +133,7 @@ class Parser:
 
     def parse_breweries(self):
         """
-        STEP &
+        STEP 6
 
         Parse all the beers from the breweries and replace the beers.csv file
 

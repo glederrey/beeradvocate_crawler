@@ -214,11 +214,11 @@ class Crawler:
 
     def crawl_all_beers(self):
         """
-        STEP 5
+        STEP 7
 
         Crawl all the reviews from all the beers.
 
-        !!! Make sure step 4 was done with the parser !!!
+        !!! Make sure step 6 was done with the parser !!!
         """
 
         df = pd.read_csv(self.data_folder + 'parsed/beers.csv')
@@ -240,7 +240,7 @@ class Crawler:
 
     def crawl_one_beer(self, brewery_id, beer_id):
         """
-        USED BY STEP 5
+        USED BY STEP 7
 
         Crawl all the reviews from one beer
 

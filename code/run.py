@@ -15,40 +15,40 @@ import os
 def run():
 
     # Create directory for the data
-    os.makedirs('../data')
+    #os.makedirs('../data')
 
     print("Process starting at : {}".format(datetime.datetime.now()))
 
     start = time.time()
 
     # Initialize classes
-    n_threads = 20
+    n_threads = 10
     crawler = Crawler(n_threads)
     parser = Parser(n_threads)
 
     print('1. Crawling the places...')
-    crawler.crawl_all_places()
+    #crawler.crawl_all_places()
 
     print('2. Crawling the breweries from the places...')
-    crawler.crawl_breweries_from_places()
+    #crawler.crawl_breweries_from_places()
 
     print('3. Parsing the breweries from the places...')
-    parser.parse_breweries_from_places()
+    #parser.parse_breweries_from_places()
 
     print('4. Crawling the remaining pages from the breweries...')
-    crawler.crawl_all_breweries()
+    #crawler.crawl_all_breweries()
 
     print('5. Crawling the closed breweries...')
-    crawler.crawl_all_closed_breweries()
+    #crawler.crawl_all_closed_breweries()
 
     print('6. Parsing the missing breweries...')
-    parser.parse_missing_breweries()
+    #parser.parse_missing_breweries()
 
     print('7. Parsing the breweries files to get the number of beers...')
-    parser.parse_breweries_files_for_number()
+    #parser.parse_breweries_files_for_number()
 
     print('8. Parsing the breweries files to get the beers...')
-    parser.parse_breweries_files_for_beers()
+    #parser.parse_breweries_files_for_beers()
 
     print('9. Crawling all the beers and their reviews...')
     crawler.crawl_all_beers_and_reviews()

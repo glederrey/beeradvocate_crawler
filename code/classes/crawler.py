@@ -395,36 +395,45 @@ class Crawler:
         :param beer_id: ID of the beer
         """
 
-        # Create the folder
-        folder = self.data_folder + 'beers/{:d}/{:d}/'.format(brewery_id, beer_id)
-        os.makedirs(folder)
+        try:
+            # Create the folder
+            folder = self.data_folder + 'beers/{:d}/{:d}/'.format(brewery_id, beer_id)
+            os.makedirs(folder)
 
-        # First URL
-        url = 'https://www.beeradvocate.com/beer/profile/{:d}/{:d}'.format(brewery_id, beer_id)
+            # First URL
+            url = 'https://www.beeradvocate.com/beer/profile/{:d}/{:d}'.format(brewery_id, beer_id)
 
-        # Get it and write it
-        r = requests.get(url)
-        with open(folder + '0.html', 'wb') as output:
-            output.write(r.content)
+            # Get it and write it
+            r = requests.get(url)
+            with open(folder + '0.html', 'wb') as output:
+                output.write(r.content)
 
-        # Parse it to get the number of Ratings
-        html = r.content
-        str_ = '</i> Ratings: (.+?)</b>'
-        grp = re.search(str_, str(html))
-        if grp is not None:
-            nbr = int(grp.group(1).replace(',', ''))
+            # Parse it to get the number of Ratings
+            html = r.content
+            str_ = '</i> Ratings: (.+?)</b>'
+            grp = re.search(str_, str(html))
+            if grp is not None:
+                nbr = int(grp.group(1).replace(',', ''))
 
-            # Get all the pages with the reviews and ratings
-            step = 25
+                # Get all the pages with the reviews and ratings
+                step = 25
 
-            for i in range(1, int(round_(nbr, 25) / step) + 1):
-                tmp = i * step
-                url_tmp = url + '/?view=beer&sort=&start=' + str(tmp)
+                for i in range(1, int(round_(nbr, 25) / step) + 1):
+                    tmp = i * step
+                    url_tmp = url + '/?view=beer&sort=&start=' + str(tmp)
 
-                r = requests.get(url_tmp)
+                    r = requests.get(url_tmp)
 
-                with open(folder + str(tmp) + '.html', 'wb') as output:
-                    output.write(r.content)
+                    with open(folder + str(tmp) + '.html', 'wb') as output:
+                        output.write(r.content)
+        except Exception as e:
+            print('---------------------------------------------------------------------')
+            print('')
+            print('ERROR WITH BREWERY_ID {} AND BEER_ID {}'.format(brewery_id, beer_id))
+            print(e)
+            print('---------------------------------------------------------------------')
+            print('')
+
 
 
 

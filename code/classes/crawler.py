@@ -34,38 +34,7 @@ class Crawler:
 
         self.delta_t = delta_t
 
-        self.specials_places = ['Canada', 'United States', 'United Kingdom']
-
-    ########################################################################################
-    ##                                                                                    ##
-    ##                                Other functions                                     ##
-    ##                                                                                    ##
-    ########################################################################################
-
-    def request_and_wait(self, url):
-        """
-        Run the function get from the package requests, then wait a certain amount of time.
-
-        :param url: url for the requests
-        :return r: the request
-        """
-
-        # Get the time we want to wait before running the function again
-        delta = np.abs(np.random.normal(self.delta_t, self.delta_t/2))
-
-        start = time.time()
-
-        # Run the function
-        r = requests.get(url)
-
-        elapsed = time.time()-start
-
-        # If not enough time has been spend, sleep
-        if elapsed < delta:
-            time.sleep(delta-elapsed)
-
-        # Return the result
-        return r
+        self.special_places = ['Canada', 'United States', 'United Kingdom']
 
     ########################################################################################
     ##                                                                                    ##
@@ -124,7 +93,7 @@ class Crawler:
         country = country[:-nbr]
 
         # Check if it's special or not
-        if country not in self.specials_places:
+        if country not in self.special_places:
             # Download the page with the number of breweries
             url = 'https://www.beeradvocate.com/place/directory/0/{}/'.format(grp1)
             r = self.request_and_wait(url)
@@ -208,7 +177,7 @@ class Crawler:
 
         folder = self.data_folder + 'places/'
 
-        if dir_ not in self.specials_places:
+        if dir_ not in self.special_places:
             html = open(folder + dir_ + '/0.html', 'rb').read().decode('utf8')
 
             # Get the code from the country
@@ -452,6 +421,37 @@ class Crawler:
             print(e)
             print('---------------------------------------------------------------------')
             print('')
+
+    ########################################################################################
+    ##                                                                                    ##
+    ##                                Other functions                                     ##
+    ##                                                                                    ##
+    ########################################################################################
+
+    def request_and_wait(self, url):
+        """
+        Run the function get from the package requests, then wait a certain amount of time.
+
+        :param url: url for the requests
+        :return r: the request
+        """
+
+        # Get the time we want to wait before running the function again
+        delta = np.abs(np.random.normal(self.delta_t, self.delta_t/2))
+
+        start = time.time()
+
+        # Run the function
+        r = requests.get(url)
+
+        elapsed = time.time()-start
+
+        # If not enough time has been spend, sleep
+        if elapsed < delta:
+            time.sleep(delta-elapsed)
+
+        # Return the result
+        return r
 
 
 

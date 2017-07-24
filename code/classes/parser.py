@@ -34,7 +34,7 @@ class Parser:
         else:
             self.threads = nbr_threads
 
-        self.specials_places = ['Canada', 'United States', 'United Kingdom']
+        self.special_places = ['Canada', 'United States', 'United Kingdom']
 
     ########################################################################################
     ##                                                                                    ##
@@ -63,7 +63,7 @@ class Parser:
         # Go through all the countries
         for country in list_:
             # Check if the country is in the list of special countries
-            if country not in self.specials_places:
+            if country not in self.special_places:
                 # Get all the files
                 files = os.listdir(folder + country)
 
@@ -84,7 +84,7 @@ class Parser:
                         json_brewery['place'].append(country)
 
             else:
-                # Get the list fo regions
+                # Get the list of regions
                 list_2 = os.listdir(folder + country)
                 # Go through all regions
                 for region in list_2:
@@ -158,7 +158,7 @@ class Parser:
                 grp = re.search(str_, str(html))
                 place = grp.group(3)
 
-                if place in self.specials_places:
+                if place in self.special_places:
                     # Find the region
                     str_ = '<a href="/place/directory/(\d+)/(.+?)/">(.+?)</a>'
 
@@ -180,7 +180,7 @@ class Parser:
                         grp = re.search(str_, str(html))
                         place = grp.group(3)
 
-                        if place in self.specials_places:
+                        if place in self.special_places:
                             # Find the region
                             str_ = '<a href="/place/directory/(\d+)/(.+?)/">(.+?)</a>'
 

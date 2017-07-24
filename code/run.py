@@ -15,7 +15,7 @@ import os
 def run():
 
     # Create directory for the data
-    data_folder = '../data2/'
+    data_folder = '../data/'
     if os.path.exists(data_folder):
         os.makedirs(data_folder)
 

@@ -136,7 +136,10 @@ class Crawler:
                 # Save the first page in this case
                 url = 'https://www.beeradvocate.com/place/list/?start=0&c_id={}&brewery=Y&sort=name'.format(grp1)
                 r = self.request_and_wait(url)
-                os.mkdir(folder + country)
+
+                if not os.path.exists(folder + country):
+                    os.makedirs(folder + country)
+
                 with open(folder + country + '/0.html', 'wb') as output:
                     output.write(r.content)
         else:
@@ -167,7 +170,9 @@ class Crawler:
                             grp1, g_spec.group(1))
                         r = self.request_and_wait(url)
                         name = country + '/' + place
-                        os.makedirs(folder + name)
+
+                        if not os.path.exists(folder + name):
+                            os.makedirs(folder + name)
                         with open(folder + name + '/0.html', 'wb') as output:
                             output.write(r.content)
 

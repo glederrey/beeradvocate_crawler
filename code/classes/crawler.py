@@ -269,7 +269,8 @@ class Crawler:
 
         for i in df.index:
             row = df.ix[i]
-            pool.apply_async(self.crawl_one_brewery, args=(row['id'],))
+            res = pool.apply_async(self.crawl_one_brewery, args=(row['id'],))
+        res.get()
         pool.close()
         pool.join()
 
@@ -323,7 +324,8 @@ class Crawler:
         pool = mp.Pool(processes=self.threads)
 
         for i in missing:
-            pool.apply_async(self.crawl_one_closed_brewery, args=(i,))
+            res = pool.apply_async(self.crawl_one_closed_brewery, args=(i,))
+        res.get()
         pool.close()
         pool.join()
 
@@ -381,7 +383,8 @@ class Crawler:
 
         for i in df.index:
             row = df.ix[i]
-            pool.apply_async(self.crawl_one_beer, args=(row['brewery_id'], row['beer_id']))
+            res = pool.apply_async(self.crawl_one_beer, args=(row['brewery_id'], row['beer_id']))
+        res.get()
         pool.close()
         pool.join()
 

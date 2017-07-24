@@ -7,8 +7,6 @@
 
 import multiprocessing as mp
 import pandas as pd
-import shutil
-import json
 import re
 import os
 
@@ -18,14 +16,18 @@ class Parser:
     Parser for BeerAdvocate website
     """
 
-    def __init__(self, nbr_threads=None):
+    def __init__(self, nbr_threads=None, data_folder=None):
         """
         Initialize the class
         
         :param nbr_threads: Number of threads you want to give. If not given, then it will use all the possible ones.
+        :param data_folder: Folder to save the data
         """
 
-        self.data_folder = '../data/'
+        if data_folder is None:
+            self.data_folder = '../data/'
+        else:
+            self.data_folder = data_folder
 
         if nbr_threads is None:
             self.threads = mp.cpu_count()
@@ -49,10 +51,8 @@ class Parser:
 
         folder = self.data_folder + 'parsed/'
         # Create folder for the parsed CSV tables
-        if os.path.exists(folder):
-            shutil.rmtree(folder)
-
-        os.mkdir(folder)
+        if not os.path.exists(folder):
+            os.makedirs(folder)
 
         folder = self.data_folder + 'places/'
 

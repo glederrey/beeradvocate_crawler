@@ -6,11 +6,10 @@
 # Distributed under terms of the MIT license.
 
 from classes.helpers import round_
-import multiprocessing as mp
 import pandas as pd
+import numpy as np
 import requests
-import shutil
-import json
+import time
 import re
 import os
 
@@ -20,20 +19,53 @@ class Crawler:
     Crawler for BeerAdvocate website
     """
 
-    def __init__(self, nbr_threads=None):
+    def __init__(self, delta_t, data_folder=None):
         """
         Initialize the class.
         
-        :param nbr_threads: Number of threads you want to give. If not given, then it will use all the possible ones.
+        :param delta_t: Average time in seconds between two requests
+        :param data_folder: Folder to save the data
         """
 
-        self.data_folder = '../data/'
-        if nbr_threads is None:
-            self.threads = mp.cpu_count()
+        if data_folder is None:
+            self.data_folder = '../data/'
         else:
-            self.threads = nbr_threads
+            self.data_folder = data_folder
+
+        self.delta_t = delta_t
 
         self.specials_places = ['Canada', 'United States', 'United Kingdom']
+
+    ########################################################################################
+    ##                                                                                    ##
+    ##                                Other functions                                     ##
+    ##                                                                                    ##
+    ########################################################################################
+
+    def request_and_wait(self, url):
+        """
+        Run the function get from the package requests, then wait a certain amount of time.
+
+        :param url: url for the requests
+        :return r: the request
+        """
+
+        # Get the time we want to wait before running the function again
+        delta = np.abs(np.random.normal(self.delta_t, self.delta_t/2))
+
+        start = time.time()
+
+        # Run the function
+        r = requests.get(url)
+
+        elapsed = time.time()-start
+
+        # If not enough time has been spend, sleep
+        if elapsed < delta:
+            time.sleep(delta-elapsed)
+
+        # Return the result
+        return r
 
     ########################################################################################
     ##                                                                                    ##
@@ -52,22 +84,18 @@ class Crawler:
 
         # Create folder for all the HTML pages
         folder = self.data_folder + 'misc/'
-        if os.path.exists(folder):
-            shutil.rmtree(folder)
-
-        os.mkdir(folder)
+        if not os.path.exists(folder):
+            os.makedirs(folder)
 
         # Crawl the countries
-        r = requests.get(url_countries)
+        r = self.request_and_wait(url_countries)
         with open(folder + 'countries.html', 'wb') as output:
             output.write(r.content)
 
         # Create folder for all the places
         folder = self.data_folder + 'places/'
-        if os.path.exists(folder):
-            shutil.rmtree(folder)
-
-        os.mkdir(folder)
+        if not os.path.exists(folder):
+            os.makedirs(folder)
 
         # Parse the countries
         html = open(self.data_folder + 'misc/countries.html', 'rb').read().decode('utf8')
@@ -76,15 +104,8 @@ class Crawler:
 
         grp = re.finditer(str_, str(html))
 
-        pool = mp.Pool(processes=self.threads)
-
         for g in grp:
-            grp1 = g.group(1)
-            grp2 = g.group(2)
-            res = pool.apply_async(self.crawl_one_place, args=(grp1, grp2))
-        res.get()
-        pool.close()
-        pool.join()
+            self.crawl_one_place(g.group(1), g.group(2))
 
     def crawl_one_place(self, grp1, grp2):
         """
@@ -106,7 +127,7 @@ class Crawler:
         if country not in self.specials_places:
             # Download the page with the number of breweries
             url = 'https://www.beeradvocate.com/place/directory/0/{}/'.format(grp1)
-            r = requests.get(url)
+            r = self.request_and_wait(url)
             # Get the number of breweries
             str_ = 'Brewery \((\d+)\)'
             test = re.search(str_, str(r.content))
@@ -114,14 +135,14 @@ class Crawler:
             if int(test.group(1)) > 0:
                 # Save the first page in this case
                 url = 'https://www.beeradvocate.com/place/list/?start=0&c_id={}&brewery=Y&sort=name'.format(grp1)
-                r = requests.get(url)
+                r = self.request_and_wait(url)
                 os.mkdir(folder + country)
                 with open(folder + country + '/0.html', 'wb') as output:
                     output.write(r.content)
         else:
             # Download the page with all the regions
             url = 'https://www.beeradvocate.com/place/directory/0/{}/'.format(grp1)
-            r = requests.get(url)
+            r = self.request_and_wait(url)
             html_spec = r.content
             # Get all the regions
             str_spec = '<a href="/place/directory/0/{}/(.+?)/">(.+?)</a>'.format(grp1)
@@ -134,7 +155,7 @@ class Crawler:
                     place = place[:-nbr]
                     # Download the page with the number of breweries
                     url = 'https://www.beeradvocate.com/place/directory/0/{}/{}/'.format(grp1, g_spec.group(1))
-                    r = requests.get(url)
+                    r = self.request_and_wait(url)
 
                     # Get the number of breweries
                     str_ = 'Brewery \((\d+)\)'
@@ -144,7 +165,7 @@ class Crawler:
                         # Save the first page in this case
                         url = 'https://www.beeradvocate.com/place/list/?start=0&c_id={}&s_id={}&brewery=Y&sort=name'.format(
                             grp1, g_spec.group(1))
-                        r = requests.get(url)
+                        r = self.request_and_wait(url)
                         name = country + '/' + place
                         os.makedirs(folder + name)
                         with open(folder + name + '/0.html', 'wb') as output:
@@ -167,13 +188,8 @@ class Crawler:
 
         list_ = os.listdir(folder)
 
-        pool = mp.Pool(processes=self.threads)
-
         for place in list_:
-            res = pool.apply_async(self.crawl_breweries_from_one_place, args=(place,))
-        res.get()
-        pool.close()
-        pool.join()
+            self.crawl_breweries_from_one_place(place)
 
     def crawl_breweries_from_one_place(self, dir_):
         """
@@ -201,11 +217,11 @@ class Crawler:
             nbr = round_(int(grp.group(1)) - 1, step)
 
             # Download the remaining breweries
-            for i in range(1, int((nbr) / step) + 1):
+            for i in range(1, int(nbr / step) + 1):
                 start = i * step
                 url = 'https://www.beeradvocate.com/place/list/?start={:d}&c_id={}&brewery=Y&sort=name'.format(start,
                                                                                                                code)
-                r = requests.get(url)
+                r = self.request_and_wait(url)
 
                 # Save it
                 with open(folder + dir_ + '/{:d}.html'.format(start), 'wb') as output:
@@ -231,11 +247,11 @@ class Crawler:
                 nbr = round_(int(grp.group(1)) - 1, step)
 
                 # Download the remaining breweries
-                for i in range(1, int((nbr) / step) + 1):
+                for i in range(1, int(nbr / step) + 1):
                     start = i * step
                     url = 'https://www.beeradvocate.com/place/list/?start={:d}&c_id={}&s_id={}&brewery=Y&sort=name'.format(
                         start, code, code_region)
-                    r = requests.get(url)
+                    r = self.request_and_wait(url)
 
                     # Save it
                     with open(folder + dir_ + '/' + dir_2 + '/{:d}.html'.format(start), 'wb') as output:
@@ -260,19 +276,12 @@ class Crawler:
 
         folder = self.data_folder + 'breweries/'
         # Create folder for all the HTML pages
-        if os.path.exists(folder):
-            shutil.rmtree(folder)
-
-        os.mkdir(folder)
-
-        pool = mp.Pool(processes=self.threads)
+        if not os.path.exists(folder):
+            os.makedirs(folder)
 
         for i in df.index:
             row = df.ix[i]
-            res = pool.apply_async(self.crawl_one_brewery, args=(row['id'],))
-        res.get()
-        pool.close()
-        pool.join()
+            self.crawl_one_brewery(row['id'])
 
     def crawl_one_brewery(self, id_):
         """
@@ -284,13 +293,16 @@ class Crawler:
 
         folder = self.data_folder + 'breweries/'
 
-        # Get the HTML page
-        url = 'https://www.beeradvocate.com/beer/profile/{:d}/?view=beers&show=all'.format(id_)
-        r = requests.get(url)
+        # Check if file already exists
+        if not os.path.exists(folder + str(id_) + '.html'):
 
-        # Save it
-        with open(folder + str(id_) + '.html', 'wb') as output:
-            output.write(r.content)
+            # Get the HTML page
+            url = 'https://www.beeradvocate.com/beer/profile/{:d}/?view=beers&show=all'.format(id_)
+            r = self.request_and_wait(url)
+
+            # Save it
+            with open(folder + str(id_) + '.html', 'wb') as output:
+                output.write(r.content)
 
     ########################################################################################
     ##                                                                                    ##
@@ -321,13 +333,8 @@ class Crawler:
         # The missing ones
         missing = list(set(all_ids) - set(got))
 
-        pool = mp.Pool(processes=self.threads)
-
         for i in missing:
-            res = pool.apply_async(self.crawl_one_closed_brewery, args=(i,))
-        res.get()
-        pool.close()
-        pool.join()
+            self.crawl_one_closed_brewery(i)
 
     def crawl_one_closed_brewery(self, id_):
         """
@@ -340,20 +347,22 @@ class Crawler:
 
         folder = self.data_folder + 'breweries/'
 
-        url = 'https://www.beeradvocate.com/beer/profile/{:d}/?view=beers&show=all'.format(id_)
+        # Check if file already exists
+        if not os.path.exists(folder + str(id_) + '.html'):
+            url = 'https://www.beeradvocate.com/beer/profile/{:d}/?view=beers&show=all'.format(id_)
 
-        r = requests.get(url)
+            r = self.request_and_wait(url)
 
-        html = r.content
+            html = r.content
 
-        # Search if it's a brewery
-        str_ = '<b>Type:</b> (.+?)\\\\n\\\\t\\\\t<br>'
-        grp = re.search(str_, str(html))
-        types = grp.group(1).split(', ')
+            # Search if it's a brewery
+            str_ = '<b>Type:</b> (.+?)\\\\n\\\\t\\\\t<br>'
+            grp = re.search(str_, str(html))
+            types = grp.group(1).split(', ')
 
-        if 'Brewery' in types:
-            with open(folder + str(id_) + '.html', 'wb') as output:
-                output.write(r.content)
+            if 'Brewery' in types:
+                with open(folder + str(id_) + '.html', 'wb') as output:
+                    output.write(r.content)
 
     ########################################################################################
     ##                                                                                    ##
@@ -374,19 +383,12 @@ class Crawler:
 
         folder = self.data_folder + 'beers/'
         # Create folder for all the HTML pages
-        if os.path.exists(folder):
-            shutil.rmtree(folder)
-
-        os.mkdir(folder)
-
-        pool = mp.Pool(processes=self.threads)
+        if not os.path.exists(folder):
+            os.makedirs(folder)
 
         for i in df.index:
             row = df.ix[i]
-            res = pool.apply_async(self.crawl_one_beer, args=(row['brewery_id'], row['beer_id']))
-        res.get()
-        pool.close()
-        pool.join()
+            self.crawl_one_beer(row['brewery_id'], row['beer_id'])
 
     def crawl_one_beer(self, brewery_id, beer_id):
         """
@@ -398,37 +400,46 @@ class Crawler:
         :param beer_id: ID of the beer
         """
 
+        step = 25
+
         try:
             # Create the folder
             folder = self.data_folder + 'beers/{:d}/{:d}/'.format(brewery_id, beer_id)
-            os.makedirs(folder)
+            if not os.path.exists(folder):
+                os.makedirs(folder)
 
-            # First URL
-            url = 'https://www.beeradvocate.com/beer/profile/{:d}/{:d}'.format(brewery_id, beer_id)
+            if not os.path.exists(folder + '0.html'):
 
-            # Get it and write it
-            r = requests.get(url)
-            with open(folder + '0.html', 'wb') as output:
-                output.write(r.content)
+                # First URL
+                url = 'https://www.beeradvocate.com/beer/profile/{:d}/{:d}'.format(brewery_id, beer_id)
+
+                # Get it and write it
+                r = self.request_and_wait(url)
+                with open(folder + '0.html', 'wb') as output:
+                    output.write(r.content)
+
+                html = r.content
+            else:
+                html = open(folder + '0.html', 'rb').read().decode('utf8')
 
             # Parse it to get the number of Ratings
-            html = r.content
             str_ = '</i> Ratings: (.+?)</b>'
             grp = re.search(str_, str(html))
+
             if grp is not None:
-                nbr = int(grp.group(1).replace(',', ''))
+                nbr = round_(int(grp.group(1).replace(',', '')) - 1, step)
 
                 # Get all the pages with the reviews and ratings
-                step = 25
-
-                for i in range(1, int(round_(nbr, 25) / step) + 1):
+                for i in range(1, int(nbr / step) + 1):
                     tmp = i * step
-                    url_tmp = url + '/?view=beer&sort=&start=' + str(tmp)
 
-                    r = requests.get(url_tmp)
+                    if not os.path.exists(folder + str(tmp) + '.html'):
+                        url_tmp = url + '/?view=beer&sort=&start=' + str(tmp)
 
-                    with open(folder + str(tmp) + '.html', 'wb') as output:
-                        output.write(r.content)
+                        r = self.request_and_wait(url_tmp)
+
+                        with open(folder + str(tmp) + '.html', 'wb') as output:
+                            output.write(r.content)
         except Exception as e:
             print('---------------------------------------------------------------------')
             print('')

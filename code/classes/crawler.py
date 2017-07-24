@@ -332,11 +332,15 @@ class Crawler:
             # Search if it's a brewery
             str_ = '<b>Type:</b> (.+?)\\\\n\\\\t\\\\t<br>'
             grp = re.search(str_, str(html))
-            types = grp.group(1).split(', ')
+            try:
+                types = grp.group(1).split(', ')
 
-            if 'Brewery' in types:
-                with open(folder + str(id_) + '.html', 'wb') as output:
-                    output.write(r.content)
+                if 'Brewery' in types:
+                    with open(folder + str(id_) + '.html', 'wb') as output:
+                        output.write(r.content)
+            except AttributeError:
+                print('Error with file {}.html'.format(id_))
+                pass
 
     ########################################################################################
     ##                                                                                    ##
@@ -421,6 +425,7 @@ class Crawler:
             print(e)
             print('---------------------------------------------------------------------')
             print('')
+            pass
 
     ########################################################################################
     ##                                                                                    ##

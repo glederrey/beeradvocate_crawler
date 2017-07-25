@@ -303,7 +303,11 @@ class Crawler:
                         with open(folder + str(id_) + '.html', 'wb') as output:
                             output.write(r.content)
                 except AttributeError:
-                    print('Error for place with ID {}'.format(id_))
+                    print('---------------------------------------------------------------------')
+                    print('')
+                    print('ERROR WITH BREWERY_ID {}'.format(id_))
+                    print('---------------------------------------------------------------------')
+                    print('')
                     pass
 
     ########################################################################################

@@ -271,7 +271,7 @@ class Parser:
         for i in df.index:
             row = df.ix[i]
             file_ = folder + str(row['id']) + '.html'
-            #Open the HTML
+            # Open the HTML
             html = open(file_, 'rb').read().decode('utf8')
 
             # Get the brewery name

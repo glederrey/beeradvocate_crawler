@@ -36,6 +36,20 @@ class Parser:
 
         self.special_places = ['Canada', 'United States', 'United Kingdom']
 
+        self.country_to_change = {'Korea (North)': 'North Korea',
+                                  'Korea (South)': 'South Korea',
+                                  'Fiji': 'Fiji Islands',
+                                  'Bosnia & Herzegovina': 'Bosnia and Herzegovina',
+                                  'Cape Verde': 'Cape Verde Islands',
+                                  "Cote D'Ivoire (Ivory Coast)": 'Ivory Coast',
+                                  'Croatia (Hrvatska)': 'Croatia',
+                                  'New Zealand (Aotearoa)': 'New Zealand',
+                                  'Russian Federation': 'Russia',
+                                  'Saint Vincent & The Grenadines': 'Saint Vincent and The Grenadines',
+                                  'Sao Tome & Principe': 'Sao Tome and Principe',
+                                  'Turks & Caicos Islands': 'Turks and Caicos Islands',
+                                  'Viet Nam': 'Vietnam'}
+
     ########################################################################################
     ##                                                                                    ##
     ##                       Parse the breweries from the places                          ##
@@ -58,7 +72,7 @@ class Parser:
 
         list_ = os.listdir(folder)
 
-        json_brewery = {'name': [], 'id': [], 'place': []}
+        json_brewery = {'name': [], 'id': [], 'location': []}
 
         # Go through all the countries
         for country in list_:
@@ -66,6 +80,11 @@ class Parser:
             if country not in self.special_places:
                 # Get all the files
                 files = os.listdir(folder + country)
+
+                place = country
+                # Change name of the country to a more convenient one
+                if place in self.country_to_change:
+                    place = self.country_to_change[place]
 
                 # Go through all the files
                 for file_ in files:
@@ -81,7 +100,7 @@ class Parser:
                     for g in grp:
                         json_brewery['id'].append(int(g.group(1)))
                         json_brewery['name'].append(g.group(2))
-                        json_brewery['place'].append(country)
+                        json_brewery['location'].append(place)
 
             else:
                 # Get the list of regions
@@ -101,11 +120,20 @@ class Parser:
 
                         grp = re.finditer(str_, str(html))
 
+                        if country == 'United States':
+                            place = country + ', ' + region
+                            if place == 'United States, District of Columbia':
+                                place = 'United States, New York'
+                        elif country == 'Canada':
+                            place = country
+                        elif country == 'United Kingdom':
+                            place = region
+
                         # Put info in JSON
                         for g in grp:
                             json_brewery['id'].append(int(g.group(1)))
                             json_brewery['name'].append(g.group(2))
-                            json_brewery['place'].append(country + ', ' + region)
+                            json_brewery['location'].append(place)
 
         # Transform into pandas DF
         df = pd.DataFrame(json_brewery)
@@ -191,8 +219,15 @@ class Parser:
                     except AttributeError:
                         place = 'UNKNOWN'
 
+            # Change name of the country to a more convenient one
+            if place in self.country_to_change:
+                place = self.country_to_change[place]
+
+            if place == 'United States, District of Columbia':
+                place = 'United States, New York'
+
             json_missing['name'].append(name)
-            json_missing['place'].append(place)
+            json_missing['location'].append(place)
             json_missing['id'].append(int(file_.replace('.html', '')))
 
         # To pandas DF

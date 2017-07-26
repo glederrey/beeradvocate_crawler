@@ -74,76 +74,68 @@ class Crawler:
         grp = re.finditer(str_, str(html))
 
         for g in grp:
-            self.crawl_one_place(g.group(1), g.group(2))
 
-    def crawl_one_place(self, grp1, grp2):
-        """
-        USED BY STEP 1
+            folder = self.data_folder + 'places/'
 
-        Crawl one place and save it
-        :param grp1: Results of REGEX 1 (Country Code)
-        :param grp2: Results of REGEX 2 (Country name)
-        """
+            # Get the country name
+            country = g.group(2).replace('<b>', '').replace('</b>', '')
+            nbr = country[::-1].find(' ') + 1
+            country = country[:-nbr]
 
-        folder = self.data_folder + 'places/'
-
-        # Get the country name
-        country = grp2.replace('<b>', '').replace('</b>', '')
-        nbr = country[::-1].find(' ') + 1
-        country = country[:-nbr]
-
-        # Check if it's special or not
-        if country not in self.special_places:
-            # Download the page with the number of breweries
-            url = 'https://www.beeradvocate.com/place/directory/0/{}/'.format(grp1)
-            r = self.request_and_wait(url)
-            # Get the number of breweries
-            str_ = 'Brewery \((\d+)\)'
-            test = re.search(str_, str(r.content))
-            # Check if it's more than 0
-            if int(test.group(1)) > 0:
-                # Save the first page in this case
-                url = 'https://www.beeradvocate.com/place/list/?start=0&c_id={}&brewery=Y&sort=name'.format(grp1)
+            # Check if it's special or not
+            if country not in self.special_places:
+                # Download the page with the number of breweries
+                url = 'https://www.beeradvocate.com/place/directory/0/{}/'.format(g.group(1))
                 r = self.request_and_wait(url)
-
-                if not os.path.exists(folder + country):
-                    os.makedirs(folder + country)
-
-                with open(folder + country + '/0.html', 'wb') as output:
-                    output.write(r.content)
-        else:
-            # Download the page with all the regions
-            url = 'https://www.beeradvocate.com/place/directory/0/{}/'.format(grp1)
-            r = self.request_and_wait(url)
-            html_spec = r.content
-            # Get all the regions
-            str_spec = '<a href="/place/directory/0/{}/(.+?)/">(.+?)</a>'.format(grp1)
-            grp_spec = re.finditer(str_spec, str(html_spec))
-            for g_spec in grp_spec:
-                if '#' not in g_spec.group(1):
-                    # Get the name of the region
-                    place = g_spec.group(2).replace('<b>', '').replace('</b>', '')
-                    nbr = place[::-1].find(' ') + 1
-                    place = place[:-nbr]
-                    # Download the page with the number of breweries
-                    url = 'https://www.beeradvocate.com/place/directory/0/{}/{}/'.format(grp1, g_spec.group(1))
+                # Get the number of breweries
+                str_ = 'Brewery \((\d+)\)'
+                test = re.search(str_, str(r.content))
+                # Check if it's more than 0
+                if int(test.group(1)) > 0:
+                    # Save the first page in this case
+                    url = 'https://www.beeradvocate.com/place/list/?start=0&c_id={}&brewery=Y&sort=name'.format(
+                        g.group(1))
                     r = self.request_and_wait(url)
 
-                    # Get the number of breweries
-                    str_ = 'Brewery \((\d+)\)'
-                    test = re.search(str_, str(r.content))
-                    # Check if it's more than 0
-                    if int(test.group(1)) > 0:
-                        # Save the first page in this case
-                        url = 'https://www.beeradvocate.com/place/list/?start=0&c_id={}&s_id={}&brewery=Y&sort=name'.format(
-                            grp1, g_spec.group(1))
-                        r = self.request_and_wait(url)
-                        name = country + '/' + place
+                    if not os.path.exists(folder + country):
+                        os.makedirs(folder + country)
 
-                        if not os.path.exists(folder + name):
-                            os.makedirs(folder + name)
-                        with open(folder + name + '/0.html', 'wb') as output:
-                            output.write(r.content)
+                    with open(folder + country + '/0.html', 'wb') as output:
+                        output.write(r.content)
+            else:
+                # Download the page with all the regions
+                url = 'https://www.beeradvocate.com/place/directory/0/{}/'.format(g.group(1))
+                r = self.request_and_wait(url)
+                html_spec = r.content
+                # Get all the regions
+                str_spec = '<a href="/place/directory/0/{}/(.+?)/">(.+?)</a>'.format(g.group(1))
+                grp_spec = re.finditer(str_spec, str(html_spec))
+                for g_spec in grp_spec:
+                    if '#' not in g_spec.group(1):
+                        # Get the name of the region
+                        place = g_spec.group(2).replace('<b>', '').replace('</b>', '')
+                        nbr = place[::-1].find(' ') + 1
+                        place = place[:-nbr]
+                        # Download the page with the number of breweries
+                        url = 'https://www.beeradvocate.com/place/directory/0/{}/{}/'.format(g.group(1),
+                                                                                             g_spec.group(1))
+                        r = self.request_and_wait(url)
+
+                        # Get the number of breweries
+                        str_ = 'Brewery \((\d+)\)'
+                        test = re.search(str_, str(r.content))
+                        # Check if it's more than 0
+                        if int(test.group(1)) > 0:
+                            # Save the first page in this case
+                            url = 'https://www.beeradvocate.com/place/list/?start=0&c_id={}&s_id={}&brewery=Y' \
+                                  '&sort=name'.format(g.group(1), g_spec.group(1))
+                            r = self.request_and_wait(url)
+                            name = country + '/' + place
+
+                            if not os.path.exists(folder + name):
+                                os.makedirs(folder + name)
+                            with open(folder + name + '/0.html', 'wb') as output:
+                                output.write(r.content)
 
     ########################################################################################
     ##                                                                                    ##
@@ -162,58 +154,18 @@ class Crawler:
 
         list_ = os.listdir(folder)
 
-        for place in list_:
-            self.crawl_breweries_from_one_place(place)
-
-    def crawl_breweries_from_one_place(self, dir_):
-        """
-        USED BY STEP 2
-
-        Crawl the missing pages with the breweries from a place
-
-        :param dir_: Name of the folder
-        """
         step = 20
 
-        folder = self.data_folder + 'places/'
+        for dir_ in list_:
+            folder = self.data_folder + 'places/'
 
-        if dir_ not in self.special_places:
-            html = open(folder + dir_ + '/0.html', 'rb').read().decode('utf8')
-
-            # Get the code from the country
-            str_ = 'c_id=(.+?)&'
-            grp = re.search(str_, str(html))
-            code = grp.group(1)
-
-            # Get the number of breweries
-            str_ = '\(out of (\d+)\)'
-            grp = re.search(str_, str(html))
-            nbr = round_(int(grp.group(1)) - 1, step)
-
-            # Download the remaining breweries
-            for i in range(1, int(nbr / step) + 1):
-                start = i * step
-                url = 'https://www.beeradvocate.com/place/list/?start={:d}&c_id={}&brewery=Y&sort=name'.format(start,
-                                                                                                               code)
-                r = self.request_and_wait(url)
-
-                # Save it
-                with open(folder + dir_ + '/{:d}.html'.format(start), 'wb') as output:
-                    output.write(r.content)
-        else:
-            list_2 = os.listdir(folder + dir_)
-            for dir_2 in list_2:
-                html = open(folder + dir_ + '/' + dir_2 + '/0.html', 'rb').read().decode('utf8')
+            if dir_ not in self.special_places:
+                html = open(folder + dir_ + '/0.html', 'rb').read().decode('utf8')
 
                 # Get the code from the country
                 str_ = 'c_id=(.+?)&'
                 grp = re.search(str_, str(html))
                 code = grp.group(1)
-
-                # Get the code from the region
-                str_ = 's_id=(.+?)&'
-                grp = re.search(str_, str(html))
-                code_region = grp.group(1)
 
                 # Get the number of breweries
                 str_ = '\(out of (\d+)\)'
@@ -223,13 +175,44 @@ class Crawler:
                 # Download the remaining breweries
                 for i in range(1, int(nbr / step) + 1):
                     start = i * step
-                    url = 'https://www.beeradvocate.com/place/list/?start={:d}&c_id={}&s_id={}&brewery=Y&sort=name'.format(
-                        start, code, code_region)
+                    url = 'https://www.beeradvocate.com/place/list/?start={:d}&c_id={}&brewery=Y&sort=name'.format(
+                        start,
+                        code)
                     r = self.request_and_wait(url)
 
                     # Save it
-                    with open(folder + dir_ + '/' + dir_2 + '/{:d}.html'.format(start), 'wb') as output:
+                    with open(folder + dir_ + '/{:d}.html'.format(start), 'wb') as output:
                         output.write(r.content)
+            else:
+                list_2 = os.listdir(folder + dir_)
+                for dir_2 in list_2:
+                    html = open(folder + dir_ + '/' + dir_2 + '/0.html', 'rb').read().decode('utf8')
+
+                    # Get the code from the country
+                    str_ = 'c_id=(.+?)&'
+                    grp = re.search(str_, str(html))
+                    code = grp.group(1)
+
+                    # Get the code from the region
+                    str_ = 's_id=(.+?)&'
+                    grp = re.search(str_, str(html))
+                    code_region = grp.group(1)
+
+                    # Get the number of breweries
+                    str_ = '\(out of (\d+)\)'
+                    grp = re.search(str_, str(html))
+                    nbr = round_(int(grp.group(1)) - 1, step)
+
+                    # Download the remaining breweries
+                    for i in range(1, int(nbr / step) + 1):
+                        start = i * step
+                        url = 'https://www.beeradvocate.com/place/list/?start={:d}&c_id={}&s_id={}&brewery=Y' \
+                              '&sort=name'.format(start, code, code_region)
+                        r = self.request_and_wait(url)
+
+                        # Save it
+                        with open(folder + dir_ + '/' + dir_2 + '/{:d}.html'.format(start), 'wb') as output:
+                            output.write(r.content)
 
     ########################################################################################
     ##                                                                                    ##
@@ -255,28 +238,19 @@ class Crawler:
 
         for i in df.index:
             row = df.ix[i]
-            self.crawl_one_brewery(row['id'])
+            id_ = row['id']
 
-    def crawl_one_brewery(self, id_):
-        """
-        USED BY STEP 4
+            folder = self.data_folder + 'breweries/'
 
-        Crawl the HTML page of one brewery
-        :param id_: ID of the brewery
-        """
+            # Check if file already exists
+            if not os.path.exists(folder + str(id_) + '.html'):
+                # Get the HTML page
+                url = 'https://www.beeradvocate.com/beer/profile/{:d}/?view=beers&show=all'.format(id_)
+                r = self.request_and_wait(url)
 
-        folder = self.data_folder + 'breweries/'
-
-        # Check if file already exists
-        if not os.path.exists(folder + str(id_) + '.html'):
-
-            # Get the HTML page
-            url = 'https://www.beeradvocate.com/beer/profile/{:d}/?view=beers&show=all'.format(id_)
-            r = self.request_and_wait(url)
-
-            # Save it
-            with open(folder + str(id_) + '.html', 'wb') as output:
-                output.write(r.content)
+                # Save it
+                with open(folder + str(id_) + '.html', 'wb') as output:
+                    output.write(r.content)
 
     ########################################################################################
     ##                                                                                    ##
@@ -307,40 +281,34 @@ class Crawler:
         # The missing ones
         missing = list(set(all_ids) - set(got))
 
-        for i in missing:
-            self.crawl_one_closed_brewery(i)
+        for id_ in missing:
 
-    def crawl_one_closed_brewery(self, id_):
-        """
-        USED BY STEP 5
+            folder = self.data_folder + 'breweries/'
 
-        Crawl the page of the brewery if it's one
+            # Check if file already exists
+            if not os.path.exists(folder + str(id_) + '.html'):
+                url = 'https://www.beeradvocate.com/beer/profile/{:d}/?view=beers&show=all'.format(id_)
 
-        :param id_: ID for the place
-        """
+                r = self.request_and_wait(url)
 
-        folder = self.data_folder + 'breweries/'
+                html = r.content
 
-        # Check if file already exists
-        if not os.path.exists(folder + str(id_) + '.html'):
-            url = 'https://www.beeradvocate.com/beer/profile/{:d}/?view=beers&show=all'.format(id_)
+                # Search if it's a brewery
+                str_ = '<b>Type:</b> (.+?)\\\\n\\\\t\\\\t<br>'
+                grp = re.search(str_, str(html))
+                try:
+                    types = grp.group(1).split(', ')
 
-            r = self.request_and_wait(url)
-
-            html = r.content
-
-            # Search if it's a brewery
-            str_ = '<b>Type:</b> (.+?)\\\\n\\\\t\\\\t<br>'
-            grp = re.search(str_, str(html))
-            try:
-                types = grp.group(1).split(', ')
-
-                if 'Brewery' in types:
-                    with open(folder + str(id_) + '.html', 'wb') as output:
-                        output.write(r.content)
-            except AttributeError:
-                print('Error with file {}.html'.format(id_))
-                pass
+                    if 'Brewery' in types:
+                        with open(folder + str(id_) + '.html', 'wb') as output:
+                            output.write(r.content)
+                except AttributeError:
+                    print('---------------------------------------------------------------------')
+                    print('')
+                    print('ERROR WITH BREWERY_ID {}'.format(id_))
+                    print('---------------------------------------------------------------------')
+                    print('')
+                    pass
 
     ########################################################################################
     ##                                                                                    ##
@@ -364,68 +332,59 @@ class Crawler:
         if not os.path.exists(folder):
             os.makedirs(folder)
 
-        for i in df.index:
-            row = df.ix[i]
-            self.crawl_one_beer(row['brewery_id'], row['beer_id'])
-
-    def crawl_one_beer(self, brewery_id, beer_id):
-        """
-        USED BY STEP 9
-
-        Crawl all the reviews from one beer
-
-        :param brewery_id: ID of the brewery
-        :param beer_id: ID of the beer
-        """
-
         step = 25
 
-        try:
-            # Create the folder
-            folder = self.data_folder + 'beers/{:d}/{:d}/'.format(brewery_id, beer_id)
-            if not os.path.exists(folder):
-                os.makedirs(folder)
+        for i in df.index:
+            row = df.ix[i]
+            brewery_id = row['brewery_id']
+            beer_id = row['beer_id']
 
-            if not os.path.exists(folder + '0.html'):
+            try:
+                # Create the folder
+                folder = self.data_folder + 'beers/{:d}/{:d}/'.format(brewery_id, beer_id)
+                if not os.path.exists(folder):
+                    os.makedirs(folder)
 
-                # First URL
-                url = 'https://www.beeradvocate.com/beer/profile/{:d}/{:d}'.format(brewery_id, beer_id)
+                if not os.path.exists(folder + '0.html'):
 
-                # Get it and write it
-                r = self.request_and_wait(url)
-                with open(folder + '0.html', 'wb') as output:
-                    output.write(r.content)
+                    # First URL
+                    url = 'https://www.beeradvocate.com/beer/profile/{:d}/{:d}'.format(brewery_id, beer_id)
 
-                html = r.content
-            else:
-                html = open(folder + '0.html', 'rb').read().decode('utf8')
+                    # Get it and write it
+                    r = self.request_and_wait(url)
+                    with open(folder + '0.html', 'wb') as output:
+                        output.write(r.content)
 
-            # Parse it to get the number of Ratings
-            str_ = '</i> Ratings: (.+?)</b>'
-            grp = re.search(str_, str(html))
+                    html = r.content
+                else:
+                    html = open(folder + '0.html', 'rb').read().decode('utf8')
 
-            if grp is not None:
-                nbr = round_(int(grp.group(1).replace(',', '')) - 1, step)
+                # Parse it to get the number of Ratings
+                str_ = '</i> Ratings: (.+?)</b>'
+                grp = re.search(str_, str(html))
 
-                # Get all the pages with the reviews and ratings
-                for i in range(1, int(nbr / step) + 1):
-                    tmp = i * step
+                if grp is not None:
+                    nbr = round_(int(grp.group(1).replace(',', '')) - 1, step)
 
-                    if not os.path.exists(folder + str(tmp) + '.html'):
-                        url_tmp = url + '/?view=beer&sort=&start=' + str(tmp)
+                    # Get all the pages with the reviews and ratings
+                    for i in range(1, int(nbr / step) + 1):
+                        tmp = i * step
 
-                        r = self.request_and_wait(url_tmp)
+                        if not os.path.exists(folder + str(tmp) + '.html'):
+                            url_tmp = url + '/?view=beer&sort=&start=' + str(tmp)
 
-                        with open(folder + str(tmp) + '.html', 'wb') as output:
-                            output.write(r.content)
-        except Exception as e:
-            print('---------------------------------------------------------------------')
-            print('')
-            print('ERROR WITH BREWERY_ID {} AND BEER_ID {}'.format(brewery_id, beer_id))
-            print(e)
-            print('---------------------------------------------------------------------')
-            print('')
-            pass
+                            r = self.request_and_wait(url_tmp)
+
+                            with open(folder + str(tmp) + '.html', 'wb') as output:
+                                output.write(r.content)
+            except Exception as e:
+                print('---------------------------------------------------------------------')
+                print('')
+                print('ERROR WITH BREWERY_ID {} AND BEER_ID {}'.format(brewery_id, beer_id))
+                print(e)
+                print('---------------------------------------------------------------------')
+                print('')
+                pass
 
     ########################################################################################
     ##                                                                                    ##

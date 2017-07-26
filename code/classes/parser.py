@@ -5,8 +5,8 @@
 #
 # Distributed under terms of the MIT license.
 
-import multiprocessing as mp
 import pandas as pd
+import numpy as np
 import re
 import os
 
@@ -16,7 +16,7 @@ class Parser:
     Parser for BeerAdvocate website
     """
 
-    def __init__(self, nbr_threads=None, data_folder=None):
+    def __init__(self, data_folder=None):
         """
         Initialize the class
         
@@ -28,11 +28,6 @@ class Parser:
             self.data_folder = '../data/'
         else:
             self.data_folder = data_folder
-
-        if nbr_threads is None:
-            self.threads = mp.cpu_count()
-        else:
-            self.threads = nbr_threads
 
         self.special_places = ['Canada', 'United States', 'United Kingdom']
 
@@ -329,3 +324,113 @@ class Parser:
 
         # Save to a CSV file
         df_beers.to_csv(self.data_folder + 'parsed/beers.csv', index=False)
+
+    ########################################################################################
+    ##                                                                                    ##
+    ##                   Parse the beer files to get some information                     ##
+    ##                                                                                    ##
+    ########################################################################################
+
+    def parse_beer_files_for_information(self):
+        """
+        STEP 10
+
+        Parse the beer files to get some information on the beers
+
+        !!! Make sure step 9 was done with the crawler !!!
+        """
+
+        # Load the DF
+        df = pd.read_csv(self.data_folder + 'parsed/beers.csv')
+
+        ## !!! ADD ABV !!! ##
+
+        nbr_ratings = []
+        nbr_reviews = []
+        ba_score = []
+        bros_score = []
+        avg = []
+
+        for i in df.index:
+            row = df.ix[i]
+
+            file = self.data_folder + 'beers/{}/{}/0.html'.format(row['brewery_id'], row['beer_id'])
+
+            # Open the file
+            html_txt = open(file, 'rb').read().decode('utf-8')
+
+            # Find number of ratings
+            str_ = '<dt>Ratings:</dt>\\n\\t\\t\\t\\t\\t<dd><span class="ba-ratings">(.+?)</span></dd>'
+
+            grp = re.search(str_, html_txt)
+
+            nbr_rat = int(grp.group(1).replace(',', ''))
+
+            nbr_ratings.append(nbr_rat)
+
+            # Find number of reviews
+            str_ = '<dt>Reviews:</dt>\\n\\t\\t\\t\\t\\t<dd><span class="ba-reviews">(.+?)</span></dd>'
+
+            grp = re.search(str_, html_txt)
+
+            nbr_rev = int(grp.group(1).replace(',', ''))
+
+            nbr_reviews.append(nbr_rev)
+
+            # Find the average
+            str_ = 'Avg:</dt>\\n\\t\\t\\t\\t\\t<dd><span class="ba-ravg">(.+?)</span></dd>'
+
+            grp = re.search(str_, html_txt)
+
+            avg_val = float(grp.group(1))
+
+            avg.append(avg_val)
+
+            # Find the BA Score
+            str_ = '<b>BA SCORE</b>\\n\\t\\t\\t<br>\\n\\t\\t\\t<span class="BAscore_big ba-score">(.+?)</span>'
+
+            grp = re.search(str_, html_txt)
+
+            try:
+                ba = float(grp.group(1))
+            except ValueError:
+                ba = np.nan
+
+            ba_score.append(ba)
+
+            # Find the Bros score
+            str_ = '<b>THE BROS</b>\\n\\t\\t\\t<br>\\n\\t\\t\\t<span class="BAscore_big ba-bro_score">(.+?)</span>'
+
+            grp = re.search(str_, html_txt)
+
+            try:
+                bros = float(grp.group(1))
+            except ValueError:
+                bros = np.nan
+
+            bros_score.append(bros)
+
+        # Add the new columns
+        df.loc[:, 'nbr_ratings'] = nbr_ratings
+        df.loc[:, 'nbr_reviews'] = nbr_reviews
+        df.loc[:, 'avg'] = avg
+        df.loc[:, 'ba_score'] = ba_score
+        df.loc[:, 'bros_score'] = bros_score
+
+        # Save it again
+        df.to_csv(self.data_folder + 'parsed/beers.csv', index=False)
+
+    ########################################################################################
+    ##                                                                                    ##
+    ##                      Parse the beer files to get the reviews                       ##
+    ##                                                                                    ##
+    ########################################################################################
+
+    def parse_beer_files_for_reviews(self):
+        """
+        STEP 11
+
+        Parse the beer files to get some information on the beers
+
+        !!! Make sure step 9 was done with the crawler !!!
+        """

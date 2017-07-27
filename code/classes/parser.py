@@ -45,6 +45,14 @@ class Parser:
                                   'Turks & Caicos Islands': 'Turks and Caicos Islands',
                                   'Viet Nam': 'Vietnam'}
 
+        self.day_to_nbr = {'Monday': 0,
+                           'Tuesday': 1,
+                           'Wednesday': 2,
+                           'Thursday': 3,
+                           'Friday': 4,
+                           'Saturday': 5,
+                           'Sunday': 6}
+
     ########################################################################################
     ##                                                                                    ##
     ##                       Parse the breweries from the places                          ##
@@ -310,7 +318,11 @@ class Parser:
             brewery = grp.group(1)
 
             # Get all the other info
-            str_ = '<a href="/beer/profile/(\d+)/(\d+)/"><b>(.+?)</b></a></td><td valign=top class="hr_bottom_light"><a href="/beer/style/(\d+)/">(.+?)</a></td><td align="left" valign="top" class="hr_bottom_light"><span style="color: #999999; font-weight: bold;">(.+?)</span></td><td align="left" valign="top" class="hr_bottom_light"><b>(.+?)</b></td><td align="left" valign="top" class="hr_bottom_light">(.+?)</td>'
+            str_ = '<a href="/beer/profile/(\d+)/(\d+)/"><b>(.+?)</b></a></td><td valign=top class="hr_bottom_light">' \
+                   '<a href="/beer/style/(\d+)/">(.+?)</a></td><td align="left" valign="top" class="hr_bottom_light">' \
+                   '<span style="color: #999999; font-weight: bold;">(.+?)</span></td><td align="left" valign="top" ' \
+                   'class="hr_bottom_light"><b>(.+?)</b></td><td align="left" valign="top" class="hr_bottom_' \
+                   'light">(.+?)</td>'
             grp = re.finditer(str_, str(html))
             for g in grp:
                 json_beers['beer_name'].append(g.group(3))
@@ -343,13 +355,12 @@ class Parser:
         # Load the DF
         df = pd.read_csv(self.data_folder + 'parsed/beers.csv')
 
-        ## !!! ADD ABV !!! ##
-
         nbr_ratings = []
         nbr_reviews = []
         ba_score = []
         bros_score = []
         avg = []
+        abv = []
 
         for i in df.index:
             row = df.ix[i]
@@ -384,6 +395,9 @@ class Parser:
 
             avg_val = float(grp.group(1))
 
+            if nbr_rat == 0:
+                avg_val = np.nan
+
             avg.append(avg_val)
 
             # Find the BA Score
@@ -410,12 +424,25 @@ class Parser:
 
             bros_score.append(bros)
 
+            # Find the ABV
+            str_ = '<b>Alcohol by volume \(ABV\):</b> (.+?)\\n\\t\\t<br>'
+
+            grp = re.search(str_, html_txt)
+
+            try:
+                abv_val = float(grp.group(1).replace('%', ''))
+            except ValueError:
+                abv_val = np.nan
+
+            abv.append(abv_val)
+
         # Add the new columns
         df.loc[:, 'nbr_ratings'] = nbr_ratings
         df.loc[:, 'nbr_reviews'] = nbr_reviews
         df.loc[:, 'avg'] = avg
         df.loc[:, 'ba_score'] = ba_score
         df.loc[:, 'bros_score'] = bros_score
+        df.loc[:, 'abv'] = abv
 
         # Save it again
         df.to_csv(self.data_folder + 'parsed/beers.csv', index=False)

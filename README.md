@@ -19,7 +19,37 @@ After running the code, you will get a folder called `data` with several subfold
  from all the breweries. Inside the breweries folders, you will find the folders for all the beers 
  from this given brewery. Inside the beers folders, you will find the HTML pages with all the reviews.
 - `parsed` **contains all the parsed data**. In particular, it contains the files: 
- *breweries.csv* and *beers.csv*. (MORE TO COME)
+ *breweries.csv*, *beers.csv*, *ratings.txt.gz*, and *reviews.txt.gz*. (MORE TO COME)
+
+## Ratings
+
+The collection of ratings are in the files *ratings.txt.gz* and *reviews.txt.gz* in the folder `parsed`. Two files were 
+created according to the definitions of the reviews on BeerAdvocate website. Indeed, for them a review is a rating with 
+a text of a least 150 characters. Therefore, the file *reviews.txt.gz* contains only the reviews while the file 
+*ratings.txt.gz* contains all the ratings (with and without text). In the folder `code`, there is an 
+example in python how to parse this file called [example_parser](./code/example_parser.py). The function parse (that you can reuse) is creating an iterator from the 
+file. Then, you will go through each item (being a full rating). Each item can be treated as a dict or a JSON. Here is 
+the list of key-value pairs with their type (that you have to change):
+
+| Keys             | Type  | Description                           | **Warning**                                                                            |
+| :--------------- | :---- | :------------------------------------ | :------------------------------------------------------------------------------------- |
+| **beer_name**    | str   | Name of the beer                      |                                                                                        |
+| **beer_id**      | int   | ID of the beer                        |                                                                                        |
+| **brewery_name** | str   | Name of the brewery                   |                                                                                        |
+| **brewery_id**   | int   | ID of the brewery                     |                                                                                        |
+| **style**        | str   | Style of the beer                     |                                                                                        |
+| **abv**          | float | ABV (Alcohol By Volume) in percentage |                                                                                        |
+| **user_name**    | str   | Name of the user                      |                                                                                        |
+| **user_id**      | str   | ID of the user                        |                                                                                        |
+| **appearance**   | float | Rating for appearance                 | Not always available                                                                   |
+| **aroma**        | float | Rating for aroma                      | Not always available                                                                   |
+| **palate**       | float | Rating for palate                     | Not always available                                                                   |
+| **taste**        | float | Rating for taste                      | Not always available                                                                   |
+| **overall**      | float | Rating for overall                    | Not always available                                                                   |
+| **rating**       | float | Final rating                          |                                                                                        |
+| **text**         | str   | Text of the rating                    | Not always available in *ratings.txt.gz*. At least 150 characters in *reviews.txt.gz*. |
+| **date**         | int   | Date of the review in UNIX Epoch      | No access to time of the day. => Time is always noon.                                  |
+
 
 ## Link to the scraped data
 
@@ -36,6 +66,8 @@ After running the code, you will get a folder called `data` with several subfold
 7. **Parse** all the breweries to add the number of beers to the CSV file (*breweries.csv*)
 8. **Parse** all the breweries to get the beers and create a CSV file (*beers.csv*)
 9. **Crawl** all the beers and their reviews
+10. **Parse** all the beers to add some information in the CSV file (*beers.csv*)
+11. **Parse** all the beers to get all the reviews and save them in two gzip files (*ratings.txt.gz* and *reviews.txt.gz*)
 
 
 ## Dates and Time when the data were scraped

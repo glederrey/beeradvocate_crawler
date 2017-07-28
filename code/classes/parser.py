@@ -7,6 +7,9 @@
 
 import pandas as pd
 import numpy as np
+import datetime
+import time
+import gzip
 import re
 import os
 
@@ -20,7 +23,6 @@ class Parser:
         """
         Initialize the class
         
-        :param nbr_threads: Number of threads you want to give. If not given, then it will use all the possible ones.
         :param data_folder: Folder to save the data
         """
 
@@ -457,7 +459,177 @@ class Parser:
         """
         STEP 11
 
-        Parse the beer files to get some information on the beers
+        Parse the beer files to get all the ratings!
 
-        !!! Make sure step 9 was done with the crawler !!!
+        There's a combination of 6 different cases.
+
+        1. The date can take two different forms. Either it has the form Jul 12, 2015 or the form Tuesday at 2:15am.
+        2. The rating can either have the ratings for all the aspects or not
+        3. The rating can either have some text or not.
+
+        To follow the rules of BeerAdvocate, we create two files. One with all the ratings and one only with the
+        reviews. A rating is considered as a review if the text has at least 150 characters.
+
         """
+
+        # Open the DF
+        df = pd.read_csv(self.data_folder + '/parsed/beers2.csv')
+
+        # Open the GZIP file
+        f_ratings = gzip.open(self.data_folder + 'parsed/ratings.txt.gz', 'wb')
+        f_reviews = gzip.open(self.data_folder + 'parsed/reviews.txt.gz', 'wb')
+
+        # Go through all the beers
+        for i in df.index:
+            row = df.ix[i]
+
+            # Check that this beer has at least 1 rating
+            if row['nbr_ratings'] > 0:
+
+                folder = self.data_folder + 'beers/{}/{}/'.format(row['brewery_id'], row['beer_id'])
+
+                list_ = os.listdir(folder)
+                list_.sort()
+
+                for file in list_:
+
+                    # Open the file
+                    html_txt = open(folder + file, 'rb').read().decode('utf-8')
+
+                    # Remove the \n, \r and \t characters
+                    html_txt = html_txt.replace('\r', '').replace('\n', '').replace('\t', '')
+
+                    # Find the ratings without the aspects
+                    str_ = 'alt="Photo of ([^<]*)"></a></div></div><div id="rating_fullview_content_2">' \
+                           '<span class="BAscore_norm">([^<]*)</span><span class="rAvg_norm">/5</span>&nbsp;&nbsp;' \
+                           '(.+?)<br><br>(.+?)<span class="muted"><a href="/community/members/(.+?)/" ' \
+                           'class="username">([^<]*)</a>, <a href="/beer/profile/(\d+)/(\d+)/\?ba=([^#]*)\#review">' \
+                           '(.+?)</a></span>'
+
+                    grp = re.finditer(str_, html_txt)
+
+                    for g in grp:
+                        # Get username and userid
+                        user_name = g.group(6)
+                        user_id = g.group(5)
+
+                        # Some user have been deleted and leave a weird trace
+                        if user_name != '':
+
+                            # Get the "final" rating
+                            rating = float(g.group(2))
+
+                            # Check for the ratings of the aspects
+                            if 'overall' in g.group(3):
+                                str_2 = '<span class="muted">look: (.+?) \| smell: (.+?) \| taste: (.+?) \| feel: ' \
+                                        '(.+?) \|  overall: (.+?)</span>'
+                                grp2 = re.search(str_2, g.group(3))
+
+                                # Get the ratings for the different aspects
+                                appearance = float(grp2.group(1))
+                                aroma = float(grp2.group(2))
+                                taste = float(grp2.group(3))
+                                palate = float(grp2.group(4))
+                                overall = float(grp2.group(5))
+                            else:
+                                # Otherwise, they're all nan
+                                appearance = np.nan
+                                aroma = np.nan
+                                taste = np.nan
+                                palate = np.nan
+                                overall = np.nan
+
+                            # Get the date
+                            str_date = g.group(10)
+                            try:
+                                year = int(str_date.split(",")[1])
+                                month = time.strptime(str_date[0:3], '%b').tm_mon
+                                day = int(str_date.split(",")[0][4:])
+
+                            except IndexError:
+                                # Date written in a different way (ex: Tuesday at XX pm)
+
+                                # Get the day of the week
+                                weekday = str_date.split(' at ')[0]
+
+                                # Get last time when the file was modified
+                                last_modified = os.path.getmtime(folder + file)
+
+                                # Get the day of the week when the file was last modified
+                                dt = datetime.datetime.fromtimestamp(last_modified)
+
+                                if weekday == 'Yesterday':
+                                    delta = 1
+                                else:
+                                    # Transform it to number
+                                    day_nbr = self.day_to_nbr[weekday]
+
+                                    this_day_nbr = dt.weekday()
+
+                                    # Compute difference (modulo 7 days)
+                                    if day_nbr > this_day_nbr:
+                                        delta = this_day_nbr + 7 - day_nbr
+                                    else:
+                                        delta = this_day_nbr - day_nbr
+
+                                # Get the day when it was posted
+                                day_posted = dt - datetime.timedelta(days=delta)
+                                year = day_posted.year
+                                month = day_posted.month
+                                day = day_posted.day
+
+                            date = int(datetime.datetime(year, month, day, 12, 0).timestamp())
+
+                            # Check if there's some text
+                            if 'characters' in g.group(4):
+                                str_2 = '(.+?)<br>(.+?)<span class="muted">(.+?) characters</span><br><br><div>'
+                                grp2 = re.search(str_2, g.group(4))
+
+                                # Get the text
+                                text = grp2.group(1).replace('<br />', '')
+                                nbr_char = int(grp2.group(3).replace(',', ''))
+                            else:
+                                nbr_char = np.nan
+                                text = np.nan
+
+                            # Write in the file ratings.txt.gz
+                            f_ratings.write('beer_name: {}\n'.format(row['beer_name']).encode('utf-8'))
+                            f_ratings.write('beer_id: {:d}\n'.format(row['beer_id']).encode('utf-8'))
+                            f_ratings.write('brewery_name: {}\n'.format(row['brewery_name']).encode('utf-8'))
+                            f_ratings.write('brewery_id: {:d}\n'.format(row['brewery_id']).encode('utf-8'))
+                            f_ratings.write('style: {}\n'.format(row['style']).encode('utf-8'))
+                            f_ratings.write('abv: {}\n'.format(row['abv']).encode('utf-8'))
+                            f_ratings.write('date: {:d}\n'.format(date).encode('utf-8'))
+                            f_ratings.write('user_name: {}\n'.format(user_name).encode('utf-8'))
+                            f_ratings.write('user_id: {}\n'.format(user_id).encode('utf-8'))
+                            f_ratings.write('appearance: {}\n'.format(appearance).encode('utf-8'))
+                            f_ratings.write('aroma: {}\n'.format(aroma).encode('utf-8'))
+                            f_ratings.write('palate: {}\n'.format(palate).encode('utf-8'))
+                            f_ratings.write('taste: {}\n'.format(taste).encode('utf-8'))
+                            f_ratings.write('overall: {}\n'.format(overall).encode('utf-8'))
+                            f_ratings.write('rating: {:.2f}\n'.format(rating).encode('utf-8'))
+                            f_ratings.write('text: {}\n'.format(text).encode('utf-8'))
+                            f_ratings.write('\n'.encode('utf-8'))
+
+                            if nbr_char >= 150:
+                                # Write in the file reviews.txt.gz
+                                f_reviews.write('beer_name: {}\n'.format(row['beer_name']).encode('utf-8'))
+                                f_reviews.write('beer_id: {:d}\n'.format(row['beer_id']).encode('utf-8'))
+                                f_reviews.write('brewery_name: {}\n'.format(row['brewery_name']).encode('utf-8'))
+                                f_reviews.write('brewery_id: {:d}\n'.format(row['brewery_id']).encode('utf-8'))
+                                f_reviews.write('style: {}\n'.format(row['style']).encode('utf-8'))
+                                f_reviews.write('abv: {}\n'.format(row['abv']).encode('utf-8'))
+                                f_reviews.write('date: {:d}\n'.format(date).encode('utf-8'))
+                                f_reviews.write('user_name: {}\n'.format(user_name).encode('utf-8'))
+                                f_reviews.write('user_id: {}\n'.format(user_id).encode('utf-8'))
+                                f_reviews.write('appearance: {}\n'.format(appearance).encode('utf-8'))
+                                f_reviews.write('aroma: {}\n'.format(aroma).encode('utf-8'))
+                                f_reviews.write('palate: {}\n'.format(palate).encode('utf-8'))
+                                f_reviews.write('taste: {}\n'.format(taste).encode('utf-8'))
+                                f_reviews.write('overall: {}\n'.format(overall).encode('utf-8'))
+                                f_reviews.write('rating: {:.2f}\n'.format(rating).encode('utf-8'))
+                                f_reviews.write('text: {}\n'.format(text).encode('utf-8'))
+                                f_reviews.write('\n'.encode('utf-8'))
+
+        f_ratings.close()
+        f_reviews.close()

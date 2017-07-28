@@ -473,7 +473,7 @@ class Parser:
         """
 
         # Open the DF
-        df = pd.read_csv(self.data_folder + '/parsed/beers2.csv')
+        df = pd.read_csv(self.data_folder + '/parsed/beers.csv')
 
         # Open the GZIP file
         f_ratings = gzip.open(self.data_folder + 'parsed/ratings.txt.gz', 'wb')
@@ -482,6 +482,11 @@ class Parser:
         # Go through all the beers
         for i in df.index:
             row = df.ix[i]
+
+            nbr_rat = row['nbr_ratings']
+            nbr_rev = row['nbr_reviews']
+            count_rat = 0
+            count_rev = 0
 
             # Check that this beer has at least 1 rating
             if row['nbr_ratings'] > 0:
@@ -611,6 +616,8 @@ class Parser:
                             f_ratings.write('text: {}\n'.format(text).encode('utf-8'))
                             f_ratings.write('\n'.encode('utf-8'))
 
+                            count_rat += 1
+
                             if nbr_char >= 150:
                                 # Write in the file reviews.txt.gz
                                 f_reviews.write('beer_name: {}\n'.format(row['beer_name']).encode('utf-8'))
@@ -631,5 +638,20 @@ class Parser:
                                 f_reviews.write('text: {}\n'.format(text).encode('utf-8'))
                                 f_reviews.write('\n'.encode('utf-8'))
 
+                                count_rev += 1
+
+            if count_rat < nbr_rat:
+                # If there's a problem in the HTML file, we replace the count of ratings
+                # with the number we have now.
+                df = df.set_value(i, 'nbr_ratings', count_rat)
+
+            if count_rev < nbr_rev:
+                # If there's a problem in the HTML file, we replace the count of ratings
+                # with the number we have now.
+                df = df.set_value(i, 'nbr_reviews', count_rev)
+
         f_ratings.close()
         f_reviews.close()
+
+        # Save the CSV again
+        df.to_csv(self.data_folder + 'parsed/beers.csv', index=False)

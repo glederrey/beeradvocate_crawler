@@ -5,6 +5,7 @@
 #
 # Distributed under terms of the MIT license.
 
+from classes.helpers import parse
 import pandas as pd
 import numpy as np
 import datetime
@@ -662,3 +663,52 @@ class Parser:
 
         # Save the CSV again
         df.to_csv(self.data_folder + 'parsed/beers2.csv', index=False)
+
+    ########################################################################################
+    ##                                                                                    ##
+    ##                           Get the users from the ratings                           ##
+    ##                                                                                    ##
+    ########################################################################################
+
+    def get_users_from_ratings(self):
+        """
+        STEP 8
+
+        Go through the file ratings.txt.gz and get all the users who have rated the beers
+        """
+
+        # Load the file ratings.txt.gz in the data/parsed folder
+        iterator = parse(self.data_folder + 'parsed/ratings.txt.gz')
+
+        users = {}
+
+        # Go through the elements in the iterator
+        for item in iterator:
+
+            # Get the user name
+            user_name = item['user_name']
+
+            # Check if it's in the JSON for the users
+            if user_name not in users.keys():
+                users[user_name] = {'user_id': item['user_id'], 'nbr_ratings': 1, 'nbr_reviews': 0}
+            else:
+                # And update the number of ratings
+                users[user_name]['nbr_ratings'] += 1
+
+            # Add the review
+            if item['review'] == 'True':
+                users[user_name]['nbr_reviews'] += 1
+
+        # Prepare the JSON DataFrame
+        json_df = {'user_name': [], 'nbr_ratings': [], 'nbr_reviews': [], 'user_id': []}
+        for key in users.keys():
+            json_df['user_name'].append(key)
+            json_df['nbr_ratings'].append(users[key]['nbr_ratings'])
+            json_df['nbr_reviews'].append(users[key]['nbr_reviews'])
+            json_df['user_id'].append(users[key]['user_id'])
+
+        # Transform it into a DF
+        df = pd.DataFrame(json_df)
+
+        # Save the CSV
+        df.to_csv(self.data_folder + 'parsed/users.csv', index=False)

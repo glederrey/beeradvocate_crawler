@@ -49,7 +49,7 @@ the list of key-value pairs with their type (that you have to change):
 | **rating**       | float | Final rating                          |                                                                                        |
 | **text**         | str   | Text of the rating                    | Not always available in *ratings.txt.gz*. At least 150 characters in *reviews.txt.gz*. |
 | **date**         | int   | Date of the review in UNIX Epoch      | No access to time of the day. => Time is always noon.                                  |
-
+| **review**       | bool  | Boolean to say if it's a review       | Only available in the file *ratings.txt.gz*                                            |
 
 ## Link to the scraped data
 

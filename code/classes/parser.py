@@ -473,7 +473,7 @@ class Parser:
         """
 
         # Open the DF
-        df = pd.read_csv(self.data_folder + '/parsed/beers.csv')
+        df = pd.read_csv(self.data_folder + '/parsed/beers2.csv')
 
         # Open the GZIP file
         f_ratings = gzip.open(self.data_folder + 'parsed/ratings.txt.gz', 'wb')
@@ -597,6 +597,11 @@ class Parser:
                                 nbr_char = np.nan
                                 text = np.nan
 
+                            # Check if it's a review
+                            is_review = False
+                            if nbr_char >= 150:
+                                is_review = True
+
                             # Write in the file ratings.txt.gz
                             f_ratings.write('beer_name: {}\n'.format(row['beer_name']).encode('utf-8'))
                             f_ratings.write('beer_id: {:d}\n'.format(row['beer_id']).encode('utf-8'))
@@ -614,11 +619,13 @@ class Parser:
                             f_ratings.write('overall: {}\n'.format(overall).encode('utf-8'))
                             f_ratings.write('rating: {:.2f}\n'.format(rating).encode('utf-8'))
                             f_ratings.write('text: {}\n'.format(text).encode('utf-8'))
+                            f_ratings.write('review: {}\n'.format(is_review).encode('utf-8'))
+
                             f_ratings.write('\n'.encode('utf-8'))
 
                             count_rat += 1
 
-                            if nbr_char >= 150:
+                            if is_review:
                                 # Write in the file reviews.txt.gz
                                 f_reviews.write('beer_name: {}\n'.format(row['beer_name']).encode('utf-8'))
                                 f_reviews.write('beer_id: {:d}\n'.format(row['beer_id']).encode('utf-8'))
@@ -654,4 +661,4 @@ class Parser:
         f_reviews.close()
 
         # Save the CSV again
-        df.to_csv(self.data_folder + 'parsed/beers.csv', index=False)
+        df.to_csv(self.data_folder + 'parsed/beers2.csv', index=False)

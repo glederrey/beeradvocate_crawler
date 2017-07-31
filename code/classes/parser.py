@@ -56,6 +56,14 @@ class Parser:
                            'Saturday': 5,
                            'Sunday': 6}
 
+        self.us_states = ['Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut',
+                          'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas',
+                          'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota',
+                          'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey',
+                          'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon',
+                          'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas',
+                          'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming']
+
     ########################################################################################
     ##                                                                                    ##
     ##                       Parse the breweries from the places                          ##
@@ -672,7 +680,7 @@ class Parser:
 
     def get_users_from_ratings(self):
         """
-        STEP 8
+        STEP 12
 
         Go through the file ratings.txt.gz and get all the users who have rated the beers
         """
@@ -711,4 +719,88 @@ class Parser:
         df = pd.DataFrame(json_df)
 
         # Save the CSV
+        df.to_csv(self.data_folder + 'parsed/users.csv', index=False)
+
+    ########################################################################################
+    ##                                                                                    ##
+    ##                     Parse the user page to get some information                    ##
+    ##                                                                                    ##
+    ########################################################################################
+
+    def parse_all_users(self):
+        """
+        STEP 14
+
+        Parse all the users to get some information
+
+        !!! Make sure step 13 was done with the crawler !!!
+        """
+
+        # Load the DF of users
+        df = pd.read_csv(self.data_folder + 'parsed/users.csv')
+
+        location = []
+        joined = []
+
+        folder = self.data_folder + 'users/'
+
+        for i in df.index:
+            row = df.ix[i]
+
+            file = str(row['user_id']) + '.html'
+
+            # Open the file
+            html_txt = open(folder + file, 'rb').read().decode('utf-8')
+
+            if "This user's profile is not available." in html_txt:
+                location.append(np.nan)
+                joined.append(np.nan)
+            elif 'This member limits who may view their full profile.' in html_txt:
+                location.append('MANUAL_CHECK')
+                joined.append('MANUAL_CHECK')
+            else:
+
+                # Get the joining date
+                str_ = '<dt>Joined:</dt><dd>(.+?)</dd></dl>'
+
+                grp = re.search(str_, html_txt.replace('\n', '').replace('\t', ''))
+
+                str_date = grp.group(1).replace(',', '')
+
+                # Transform into epoch
+                month = time.strptime(str_date.split(' ')[0], '%b').tm_mon
+                day = int(str_date.split(' ')[1])
+                year = int(str_date.split(' ')[2])
+                date = int(datetime.datetime(year, month, day, 12, 0).timestamp())
+
+                joined.append(date)
+
+                # Get the location
+                str_ = 'target="_blank" rel="nofollow" itemprop="address" class="concealed">([^<]*)</a></dd></dl>'
+
+                grp = re.search(str_, html_txt)
+
+                try:
+                    place = grp.group(1)
+
+                    # Add United States if it's a state from the US
+                    if place in self.us_states:
+                        place = 'United States, ' + place
+
+                    # For Canada and UK, the region is given first
+                    if '(' in place and ')' in place:
+                        place = place.split('(')[1].split(')')[0]
+
+                    # Change to conventional name
+                    if place in self.country_to_change.keys():
+                        place = self.country_to_change[place]
+
+                    location.append(place)
+                except AttributeError:
+                    location.append(np.nan)
+
+        df.loc[:, 'joined'] = joined
+        df.loc[:, 'location'] = location
+
+        # Save the CSV again
         df.to_csv(self.data_folder + 'parsed/users.csv', index=False)

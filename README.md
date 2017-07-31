@@ -19,7 +19,7 @@ After running the code, you will get a folder called `data` with several subfold
  from all the breweries. Inside the breweries folders, you will find the folders for all the beers 
  from this given brewery. Inside the beers folders, you will find the HTML pages with all the reviews.
 - `parsed` **contains all the parsed data**. In particular, it contains the files: 
- *breweries.csv*, *beers.csv*, *ratings.txt.gz*, and *reviews.txt.gz*. (MORE TO COME)
+ *breweries.csv*, *beers.csv*, *users.csv*, *ratings.txt.gz*, and *reviews.txt.gz*.
 
 ## Ratings
 
@@ -49,7 +49,7 @@ the list of key-value pairs with their type (that you have to change):
 | **rating**       | float | Final rating                          |                                                                                        |
 | **text**         | str   | Text of the rating                    | Not always available in *ratings.txt.gz*. At least 150 characters in *reviews.txt.gz*. |
 | **date**         | int   | Date of the review in UNIX Epoch      | No access to time of the day. => Time is always noon.                                  |
-| **review**       | bool  | Boolean to say if it's a review       | Only available in the file *ratings.txt.gz*                                            |
+| **review**       | bool  | Boolean to say if it's a review       | Only available in the file *ratings.txt.gz* (String with 'True' and 'False'            |
 
 ## Link to the scraped data
 
@@ -68,7 +68,9 @@ the list of key-value pairs with their type (that you have to change):
 9. **Crawl** all the beers and their reviews
 10. **Parse** all the beers to add some information in the CSV file (*beers.csv*)
 11. **Parse** all the beers to get all the reviews and save them in two gzip files (*ratings.txt.gz* and *reviews.txt.gz*)
-
+12. Get (**Parse**) the users from the file (*ratings.txt.gz*) and save them in the CSV file (*users.csv*)
+13. **Crawl** all the users 
+14. **Parse** all the users to get some information and update the CSV (*users.csv*)
 
 ## Dates and Time when the data were scraped
 
@@ -76,7 +78,6 @@ Everything has been crawled at the same time. It started the 21st of July at XX 
 
 ## Required packages
 
-* `multiprocessing`
 * `requests`
 * `pandas`
 * `numpy`

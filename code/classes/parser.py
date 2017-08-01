@@ -381,71 +381,81 @@ class Parser:
             # Open the file
             html_txt = open(file, 'rb').read().decode('utf-8')
 
-            # Find number of ratings
-            str_ = '<dt>Ratings:</dt>\\n\\t\\t\\t\\t\\t<dd><span class="ba-ratings">(.+?)</span></dd>'
+            if 'BA SCORE' in html_txt:
 
-            grp = re.search(str_, html_txt)
+                # Find number of ratings
+                str_ = '<dt>Ratings:</dt>\\n\\t\\t\\t\\t\\t<dd><span class="ba-ratings">(.+?)</span></dd>'
 
-            nbr_rat = int(grp.group(1).replace(',', ''))
+                grp = re.search(str_, html_txt)
 
-            nbr_ratings.append(nbr_rat)
+                nbr_rat = int(grp.group(1).replace(',', ''))
 
-            # Find number of reviews
-            str_ = '<dt>Reviews:</dt>\\n\\t\\t\\t\\t\\t<dd><span class="ba-reviews">(.+?)</span></dd>'
+                nbr_ratings.append(nbr_rat)
 
-            grp = re.search(str_, html_txt)
+                # Find number of reviews
+                str_ = '<dt>Reviews:</dt>\\n\\t\\t\\t\\t\\t<dd><span class="ba-reviews">(.+?)</span></dd>'
 
-            nbr_rev = int(grp.group(1).replace(',', ''))
+                grp = re.search(str_, html_txt)
 
-            nbr_reviews.append(nbr_rev)
+                nbr_rev = int(grp.group(1).replace(',', ''))
 
-            # Find the average
-            str_ = 'Avg:</dt>\\n\\t\\t\\t\\t\\t<dd><span class="ba-ravg">(.+?)</span></dd>'
+                nbr_reviews.append(nbr_rev)
 
-            grp = re.search(str_, html_txt)
+                # Find the average
+                str_ = 'Avg:</dt>\\n\\t\\t\\t\\t\\t<dd><span class="ba-ravg">(.+?)</span></dd>'
 
-            avg_val = float(grp.group(1))
+                grp = re.search(str_, html_txt)
 
-            if nbr_rat == 0:
-                avg_val = np.nan
+                avg_val = float(grp.group(1))
 
-            avg.append(avg_val)
+                if nbr_rat == 0:
+                    avg_val = np.nan
 
-            # Find the BA Score
-            str_ = '<b>BA SCORE</b>\\n\\t\\t\\t<br>\\n\\t\\t\\t<span class="BAscore_big ba-score">(.+?)</span>'
+                avg.append(avg_val)
 
-            grp = re.search(str_, html_txt)
+                # Find the BA Score
+                str_ = '<b>BA SCORE</b>\\n\\t\\t\\t<br>\\n\\t\\t\\t<span class="BAscore_big ba-score">(.+?)</span>'
 
-            try:
-                ba = float(grp.group(1))
-            except ValueError:
-                ba = np.nan
+                grp = re.search(str_, html_txt)
 
-            ba_score.append(ba)
+                try:
+                    ba = float(grp.group(1))
+                except ValueError:
+                    ba = np.nan
 
-            # Find the Bros score
-            str_ = '<b>THE BROS</b>\\n\\t\\t\\t<br>\\n\\t\\t\\t<span class="BAscore_big ba-bro_score">(.+?)</span>'
+                ba_score.append(ba)
 
-            grp = re.search(str_, html_txt)
+                # Find the Bros score
+                str_ = '<b>THE BROS</b>\\n\\t\\t\\t<br>\\n\\t\\t\\t<span class="BAscore_big ba-bro_score">(.+?)</span>'
 
-            try:
-                bros = float(grp.group(1))
-            except ValueError:
-                bros = np.nan
+                grp = re.search(str_, html_txt)
 
-            bros_score.append(bros)
+                try:
+                    bros = float(grp.group(1))
+                except ValueError:
+                    bros = np.nan
 
-            # Find the ABV
-            str_ = '<b>Alcohol by volume \(ABV\):</b> (.+?)\\n\\t\\t<br>'
+                bros_score.append(bros)
 
-            grp = re.search(str_, html_txt)
+                # Find the ABV
+                str_ = '<b>Alcohol by volume \(ABV\):</b> (.+?)\\n\\t\\t<br>'
 
-            try:
-                abv_val = float(grp.group(1).replace('%', ''))
-            except ValueError:
-                abv_val = np.nan
+                grp = re.search(str_, html_txt)
 
-            abv.append(abv_val)
+                try:
+                    abv_val = float(grp.group(1).replace('%', ''))
+                except ValueError:
+                    abv_val = np.nan
+
+                abv.append(abv_val)
+            else:
+
+                nbr_ratings.append(np.nan)
+                nbr_reviews.append(np.nan)
+                avg.appeng(np.nan)
+                ba_score.append(np.nan)
+                bros_score.append(np.nan)
+                abv.append(np.nan)
 
         # Add the new columns
         df.loc[:, 'nbr_ratings'] = nbr_ratings
@@ -454,6 +464,10 @@ class Parser:
         df.loc[:, 'ba_score'] = ba_score
         df.loc[:, 'bros_score'] = bros_score
         df.loc[:, 'abv'] = abv
+
+        # Remove the bad lines
+        df = df[~df['nbr_ratings'].isnull()]
+        df.index = range(len(df))
 
         # Save it again
         df.to_csv(self.data_folder + 'parsed/beers.csv', index=False)

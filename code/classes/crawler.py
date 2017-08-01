@@ -339,6 +339,8 @@ class Crawler:
             brewery_id = row['brewery_id']
             beer_id = row['beer_id']
 
+            url = 'https://www.beeradvocate.com/beer/profile/{:d}/{:d}'.format(brewery_id, beer_id)
+
             # Create the folder
             folder = self.data_folder + 'beers/{:d}/{:d}/'.format(brewery_id, beer_id)
             if not os.path.exists(folder):
@@ -347,8 +349,6 @@ class Crawler:
             if not os.path.exists(folder + '0.html') or os.stat(folder + '0.html').st_size == 0:
                 count = 0
                 code = 400
-
-                url = 'https://www.beeradvocate.com/beer/profile/{:d}/{:d}'.format(brewery_id, beer_id)
 
                 try:
                     while code != 200:

@@ -466,7 +466,7 @@ class Parser:
         df.loc[:, 'abv'] = abv
 
         # Remove the bad lines
-        df = df[~df['nbr_ratings'] == -1]
+        df = df[df['nbr_ratings'] > -1]
         df.index = range(len(df))
 
         # Save it again

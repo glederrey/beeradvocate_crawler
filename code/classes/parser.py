@@ -616,7 +616,10 @@ class Parser:
                                 grp2 = re.search(str_2, g.group(4))
 
                                 # Get the text
-                                text = grp2.group(1).replace('<br />', '')
+                                try:
+                                    text = grp2.group(1).replace('<br />', '')
+                                except:
+                                    print(folder, file)
                                 nbr_char = int(grp2.group(3).replace(',', ''))
                             else:
                                 nbr_char = np.nan

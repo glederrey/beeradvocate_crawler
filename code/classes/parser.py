@@ -454,8 +454,8 @@ class Parser:
                 abv.append(abv_val)
             else:
 
-                nbr_ratings.append(np.nan)
-                nbr_reviews.append(np.nan)
+                nbr_ratings.append(-1)
+                nbr_reviews.append(-1)
                 avg.append(np.nan)
                 ba_score.append(np.nan)
                 bros_score.append(np.nan)
@@ -470,7 +470,7 @@ class Parser:
         df.loc[:, 'abv'] = abv
 
         # Remove the bad lines
-        df = df[~df['nbr_ratings'].isnull()]
+        df = df[~df['nbr_ratings'] == -1]
         df.index = range(len(df))
 
         # Save it again

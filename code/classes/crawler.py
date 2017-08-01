@@ -374,10 +374,10 @@ class Crawler:
                     print('')
 
                 # Save it
-                with open(folder + '1.html', 'wb') as output:
+                with open(folder + '0.html', 'wb') as output:
                     output.write(r.content)
 
-            html_txt = open(folder + '1.html', 'rb').read().decode('utf-8')
+            html_txt = open(folder + '0.html', 'rb').read().decode('utf-8')
 
             # Parse it to get the number of Ratings
             str_ = '</i> Ratings: (.+?)</b>'

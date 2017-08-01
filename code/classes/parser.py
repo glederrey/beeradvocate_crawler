@@ -496,7 +496,7 @@ class Parser:
         """
 
         # Open the DF
-        df = pd.read_csv(self.data_folder + '/parsed/beers2.csv')
+        df = pd.read_csv(self.data_folder + '/parsed/beers.csv')
 
         # Open the GZIP file
         f_ratings = gzip.open(self.data_folder + 'parsed/ratings.txt.gz', 'wb')
@@ -684,7 +684,7 @@ class Parser:
         f_reviews.close()
 
         # Save the CSV again
-        df.to_csv(self.data_folder + 'parsed/beers2.csv', index=False)
+        df.to_csv(self.data_folder + 'parsed/beers.csv', index=False)
 
     ########################################################################################
     ##                                                                                    ##

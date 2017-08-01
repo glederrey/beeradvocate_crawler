@@ -26,8 +26,7 @@ def run():
     # Initialize classes
     delta_t = 0.2
     crawler = Crawler(delta_t, data_folder)
-    nbr_threads = 10
-    parser = Parser(nbr_threads, data_folder)
+    parser = Parser(data_folder)
 
     print('1. Crawling the places...')
     #crawler.crawl_all_places()

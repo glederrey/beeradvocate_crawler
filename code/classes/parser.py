@@ -388,7 +388,11 @@ class Parser:
 
                 grp = re.search(str_, html_txt)
 
-                nbr_rat = int(grp.group(1).replace(',', ''))
+                try:
+                    nbr_rat = int(grp.group(1).replace(',', ''))
+                except AttributeError:
+                    print(file)
+                    asd
 
                 nbr_ratings.append(nbr_rat)
 
@@ -452,7 +456,7 @@ class Parser:
 
                 nbr_ratings.append(np.nan)
                 nbr_reviews.append(np.nan)
-                avg.appeng(np.nan)
+                avg.append(np.nan)
                 ba_score.append(np.nan)
                 bros_score.append(np.nan)
                 abv.append(np.nan)

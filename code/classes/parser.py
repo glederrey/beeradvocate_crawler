@@ -588,6 +588,8 @@ class Parser:
 
                                 if weekday == 'Yesterday':
                                     delta = 1
+                                elif weekday == 'Today':
+                                    delta = 0
                                 else:
                                     # Transform it to number
                                     day_nbr = self.day_to_nbr[weekday]

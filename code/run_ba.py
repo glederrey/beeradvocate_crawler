@@ -56,10 +56,19 @@ def run():
     #crawler.crawl_all_beers_and_reviews()
 
     print('10. Parsing all the beer files to update the beers.csv file...')
-    parser.parse_beer_files_for_information()
+    #parser.parse_beer_files_for_information()
 
     print('11. Parsing all the beer files to get the reviews...')
-    #parser.parse_beer_files_for_reviews()
+    parser.parse_beer_files_for_reviews()
+
+    print('12. Getting the users from the ratings...')
+    #parser.get_users_from_ratings()
+
+    print('13. Crawling all the users...')
+    #crawler.crawl_all_users()
+
+    print('14. Parsing the users for some information...')
+    #parser.parse_all_users()
 
     stop = time.time()
 

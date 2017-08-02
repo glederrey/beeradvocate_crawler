@@ -617,15 +617,19 @@ class Parser:
                                 str_2 = '(.+?)<br>(.+?)<span class="muted">(.+?) characters</span><br><br><div>'
                                 grp2 = re.search(str_2, g.group(4))
 
-                                # Get the text
                                 try:
+                                    # Get the text
                                     text = grp2.group(1)
-                                except:
-                                    print(folder, file)
-                                nbr_char = int(grp2.group(3).replace(',', ''))
 
-                                # Clean the text
-                                text = re.sub('<[^>]+>', '', text)
+                                    nbr_char = int(grp2.group(3).replace(',', ''))
+
+                                    # Clean the text
+                                    text = re.sub('<[^>]+>', '', text)
+
+                                except AttributeError:
+                                    nbr_char = np.nan
+                                    text = np.nan
+
                             else:
                                 nbr_char = np.nan
                                 text = np.nan

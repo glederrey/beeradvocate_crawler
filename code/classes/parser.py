@@ -619,10 +619,13 @@ class Parser:
 
                                 # Get the text
                                 try:
-                                    text = grp2.group(1).replace('<br />', '')
+                                    text = grp2.group(1)
                                 except:
                                     print(folder, file)
                                 nbr_char = int(grp2.group(3).replace(',', ''))
+
+                                # Clean the text
+                                text = re.sub('<[^>]+>', '', text)
                             else:
                                 nbr_char = np.nan
                                 text = np.nan

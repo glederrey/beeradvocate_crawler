@@ -498,6 +498,9 @@ class Parser:
         # Open the DF
         df = pd.read_csv(self.data_folder + '/parsed/beers.csv')
 
+        # Drop duplicates. No idea why they're here.
+        df = df.drop_duplicates('beer_id', keep='first')
+
         # Open the GZIP file
         f_ratings = gzip.open(self.data_folder + 'parsed/ratings.txt.gz', 'wb')
         f_reviews = gzip.open(self.data_folder + 'parsed/reviews.txt.gz', 'wb')

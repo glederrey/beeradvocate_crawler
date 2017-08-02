@@ -611,7 +611,7 @@ class Parser:
                             date = int(datetime.datetime(year, month, day, 12, 0).timestamp())
 
                             # Check if there's some text
-                            if 'characters' in g.group(4):
+                            if 'characters' in g.group(4) and not '0 characters':
                                 str_2 = '(.+?)<br>(.+?)<span class="muted">(.+?) characters</span><br><br><div>'
                                 grp2 = re.search(str_2, g.group(4))
 

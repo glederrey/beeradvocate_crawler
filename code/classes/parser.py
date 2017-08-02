@@ -589,7 +589,8 @@ class Parser:
                                 if weekday == 'Yesterday':
                                     delta = 1
                                 elif weekday == 'Today' or 'hours ago' in weekday or 'minutes ago' in weekday or \
-                                                weekday == 'A moment ago':
+                                                weekday == 'A moment ago' or 'minute ago' in weekday or \
+                                                'hour ago' in weekday:
                                     delta = 0
                                 else:
                                     # Transform it to number

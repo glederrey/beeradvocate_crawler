@@ -687,12 +687,12 @@ class Parser:
 
                                 count_rev += 1
 
-            if count_rat < nbr_rat:
+            if count_rat != nbr_rat:
                 # If there's a problem in the HTML file, we replace the count of ratings
                 # with the number we have now.
                 df = df.set_value(i, 'nbr_ratings', count_rat)
 
-            if count_rev < nbr_rev:
+            if count_rev != nbr_rev:
                 # If there's a problem in the HTML file, we replace the count of ratings
                 # with the number we have now.
                 df = df.set_value(i, 'nbr_reviews', count_rev)

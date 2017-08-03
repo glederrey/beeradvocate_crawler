@@ -522,6 +522,8 @@ class Parser:
                 list_ = os.listdir(folder)
                 list_.sort()
 
+                list_users = []
+
                 for file in list_:
 
                     # Open the file
@@ -544,8 +546,15 @@ class Parser:
                         user_name = g.group(6)
                         user_id = g.group(5)
 
+
                         # Some user have been deleted and leave a weird trace
                         if user_name != '':
+
+                            if user_name in list_users:
+                                add_rev = False
+                            else:
+                                list_users.append(user_name)
+                                add_rev = True
 
                             # Get the "final" rating
                             rating = float(g.group(2))
@@ -642,50 +651,51 @@ class Parser:
                             if nbr_char >= 150:
                                 is_review = True
 
-                            # Write in the file ratings.txt.gz
-                            f_ratings.write('beer_name: {}\n'.format(row['beer_name']).encode('utf-8'))
-                            f_ratings.write('beer_id: {:d}\n'.format(row['beer_id']).encode('utf-8'))
-                            f_ratings.write('brewery_name: {}\n'.format(row['brewery_name']).encode('utf-8'))
-                            f_ratings.write('brewery_id: {:d}\n'.format(row['brewery_id']).encode('utf-8'))
-                            f_ratings.write('style: {}\n'.format(row['style']).encode('utf-8'))
-                            f_ratings.write('abv: {}\n'.format(row['abv']).encode('utf-8'))
-                            f_ratings.write('date: {:d}\n'.format(date).encode('utf-8'))
-                            f_ratings.write('user_name: {}\n'.format(user_name).encode('utf-8'))
-                            f_ratings.write('user_id: {}\n'.format(user_id).encode('utf-8'))
-                            f_ratings.write('appearance: {}\n'.format(appearance).encode('utf-8'))
-                            f_ratings.write('aroma: {}\n'.format(aroma).encode('utf-8'))
-                            f_ratings.write('palate: {}\n'.format(palate).encode('utf-8'))
-                            f_ratings.write('taste: {}\n'.format(taste).encode('utf-8'))
-                            f_ratings.write('overall: {}\n'.format(overall).encode('utf-8'))
-                            f_ratings.write('rating: {:.2f}\n'.format(rating).encode('utf-8'))
-                            f_ratings.write('text: {}\n'.format(text).encode('utf-8'))
-                            f_ratings.write('review: {}\n'.format(is_review).encode('utf-8'))
+                            if add_rev:
+                                # Write in the file ratings.txt.gz
+                                f_ratings.write('beer_name: {}\n'.format(row['beer_name']).encode('utf-8'))
+                                f_ratings.write('beer_id: {:d}\n'.format(row['beer_id']).encode('utf-8'))
+                                f_ratings.write('brewery_name: {}\n'.format(row['brewery_name']).encode('utf-8'))
+                                f_ratings.write('brewery_id: {:d}\n'.format(row['brewery_id']).encode('utf-8'))
+                                f_ratings.write('style: {}\n'.format(row['style']).encode('utf-8'))
+                                f_ratings.write('abv: {}\n'.format(row['abv']).encode('utf-8'))
+                                f_ratings.write('date: {:d}\n'.format(date).encode('utf-8'))
+                                f_ratings.write('user_name: {}\n'.format(user_name).encode('utf-8'))
+                                f_ratings.write('user_id: {}\n'.format(user_id).encode('utf-8'))
+                                f_ratings.write('appearance: {}\n'.format(appearance).encode('utf-8'))
+                                f_ratings.write('aroma: {}\n'.format(aroma).encode('utf-8'))
+                                f_ratings.write('palate: {}\n'.format(palate).encode('utf-8'))
+                                f_ratings.write('taste: {}\n'.format(taste).encode('utf-8'))
+                                f_ratings.write('overall: {}\n'.format(overall).encode('utf-8'))
+                                f_ratings.write('rating: {:.2f}\n'.format(rating).encode('utf-8'))
+                                f_ratings.write('text: {}\n'.format(text).encode('utf-8'))
+                                f_ratings.write('review: {}\n'.format(is_review).encode('utf-8'))
 
-                            f_ratings.write('\n'.encode('utf-8'))
+                                f_ratings.write('\n'.encode('utf-8'))
 
-                            count_rat += 1
+                                count_rat += 1
 
-                            if is_review:
-                                # Write in the file reviews.txt.gz
-                                f_reviews.write('beer_name: {}\n'.format(row['beer_name']).encode('utf-8'))
-                                f_reviews.write('beer_id: {:d}\n'.format(row['beer_id']).encode('utf-8'))
-                                f_reviews.write('brewery_name: {}\n'.format(row['brewery_name']).encode('utf-8'))
-                                f_reviews.write('brewery_id: {:d}\n'.format(row['brewery_id']).encode('utf-8'))
-                                f_reviews.write('style: {}\n'.format(row['style']).encode('utf-8'))
-                                f_reviews.write('abv: {}\n'.format(row['abv']).encode('utf-8'))
-                                f_reviews.write('date: {:d}\n'.format(date).encode('utf-8'))
-                                f_reviews.write('user_name: {}\n'.format(user_name).encode('utf-8'))
-                                f_reviews.write('user_id: {}\n'.format(user_id).encode('utf-8'))
-                                f_reviews.write('appearance: {}\n'.format(appearance).encode('utf-8'))
-                                f_reviews.write('aroma: {}\n'.format(aroma).encode('utf-8'))
-                                f_reviews.write('palate: {}\n'.format(palate).encode('utf-8'))
-                                f_reviews.write('taste: {}\n'.format(taste).encode('utf-8'))
-                                f_reviews.write('overall: {}\n'.format(overall).encode('utf-8'))
-                                f_reviews.write('rating: {:.2f}\n'.format(rating).encode('utf-8'))
-                                f_reviews.write('text: {}\n'.format(text).encode('utf-8'))
-                                f_reviews.write('\n'.encode('utf-8'))
+                                if is_review:
+                                    # Write in the file reviews.txt.gz
+                                    f_reviews.write('beer_name: {}\n'.format(row['beer_name']).encode('utf-8'))
+                                    f_reviews.write('beer_id: {:d}\n'.format(row['beer_id']).encode('utf-8'))
+                                    f_reviews.write('brewery_name: {}\n'.format(row['brewery_name']).encode('utf-8'))
+                                    f_reviews.write('brewery_id: {:d}\n'.format(row['brewery_id']).encode('utf-8'))
+                                    f_reviews.write('style: {}\n'.format(row['style']).encode('utf-8'))
+                                    f_reviews.write('abv: {}\n'.format(row['abv']).encode('utf-8'))
+                                    f_reviews.write('date: {:d}\n'.format(date).encode('utf-8'))
+                                    f_reviews.write('user_name: {}\n'.format(user_name).encode('utf-8'))
+                                    f_reviews.write('user_id: {}\n'.format(user_id).encode('utf-8'))
+                                    f_reviews.write('appearance: {}\n'.format(appearance).encode('utf-8'))
+                                    f_reviews.write('aroma: {}\n'.format(aroma).encode('utf-8'))
+                                    f_reviews.write('palate: {}\n'.format(palate).encode('utf-8'))
+                                    f_reviews.write('taste: {}\n'.format(taste).encode('utf-8'))
+                                    f_reviews.write('overall: {}\n'.format(overall).encode('utf-8'))
+                                    f_reviews.write('rating: {:.2f}\n'.format(rating).encode('utf-8'))
+                                    f_reviews.write('text: {}\n'.format(text).encode('utf-8'))
+                                    f_reviews.write('\n'.encode('utf-8'))
 
-                                count_rev += 1
+                                    count_rev += 1
 
             if count_rat != nbr_rat:
                 # If there's a problem in the HTML file, we replace the count of ratings

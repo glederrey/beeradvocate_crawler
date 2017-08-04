@@ -461,20 +461,29 @@ class Crawler:
         for i in df.index:
             row = df.ix[i]
 
-            # Get the url
-            url = 'https://www.beeradvocate.com/community/members/{}/'.format(row['user_id'])
+            file = str(row['user_id']) + '.html'
 
-            # cookies
-            cookies = dict(xf_session="2be9f4039d028d137350d0bb2e6c9d9c", OX_plg="pm", OX_sd="1",
-                           __cfduid="decaf5d8d30f4fce5c2afd076a806a7501501757826", _ga="GA1.3.804066691.1501757842",
-                           _gat="1", _gid="GA1.3.1441985684.1501858687")
+            # Open the file
+            html_txt = open(folder + file, 'rb').read().decode('utf-8')
 
-            # Crawl the user's page
-            r = self.request_and_wait(url, cookies)
+            if "This user's profile is not available." in html_txt \
+                    or 'This member limits who may view their full profile.' in html_txt \
+                    or 'An unexpected error occurred.' in html_txt:
 
-            # Save it
-            with open(folder + str(row['user_id']) + '.html', 'wb') as output:
-                output.write(r.content)
+                # Get the url
+                url = 'https://www.beeradvocate.com/community/members/{}/'.format(row['user_id'])
+
+                # cookies
+                cookies = dict(xf_session="2be9f4039d028d137350d0bb2e6c9d9c", OX_plg="pm", OX_sd="1",
+                               __cfduid="decaf5d8d30f4fce5c2afd076a806a7501501757826", _ga="GA1.3.804066691.1501757842",
+                               _gat="1", _gid="GA1.3.1441985684.1501858687")
+
+                # Crawl the user's page
+                r = self.request_and_wait(url, cookies)
+
+                # Save it
+                with open(folder + str(row['user_id']) + '.html', 'wb') as output:
+                    output.write(r.content)
 
     ########################################################################################
     ##                                                                                    ##

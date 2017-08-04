@@ -796,7 +796,8 @@ class Parser:
             if "This user's profile is not available." in html_txt:
                 location.append(np.nan)
                 joined.append(np.nan)
-            elif 'This member limits who may view their full profile.' in html_txt:
+            elif 'This member limits who may view their full profile.' in html_txt or \
+                            'An unexpected error occurred.' in html_txt:
                 location.append('MANUAL_CHECK')
                 joined.append('MANUAL_CHECK')
             else:

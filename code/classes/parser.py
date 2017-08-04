@@ -805,8 +805,11 @@ class Parser:
                 str_ = '<dt>Joined:</dt><dd>(.+?)</dd></dl>'
 
                 grp = re.search(str_, html_txt.replace('\n', '').replace('\t', ''))
-
-                str_date = grp.group(1).replace(',', '')
+                try:
+                    str_date = grp.group(1).replace(',', '')
+                except AttributeError:
+                    print(file)
+                    asd
 
                 # Transform into epoch
                 month = time.strptime(str_date.split(' ')[0], '%b').tm_mon

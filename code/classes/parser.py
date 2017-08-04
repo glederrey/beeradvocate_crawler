@@ -546,7 +546,6 @@ class Parser:
                         user_name = g.group(6)
                         user_id = g.group(5)
 
-
                         # Some user have been deleted and leave a weird trace
                         if user_name != '':
 

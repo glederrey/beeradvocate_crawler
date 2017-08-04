@@ -808,15 +808,21 @@ class Parser:
                 grp = re.search(str_, html_txt.replace('\n', '').replace('\t', ''))
                 try:
                     str_date = grp.group(1).replace(',', '')
+
+                    # Transform into epoch
+                    month = time.strptime(str_date.split(' ')[0], '%b').tm_mon
+                    day = int(str_date.split(' ')[1])
+                    year = int(str_date.split(' ')[2])
+                    date = int(datetime.datetime(year, month, day, 12, 0).timestamp())
+
                 except AttributeError:
+                    print('AttributeError')
                     print(file)
                     asd
-
-                # Transform into epoch
-                month = time.strptime(str_date.split(' ')[0], '%b').tm_mon
-                day = int(str_date.split(' ')[1])
-                year = int(str_date.split(' ')[2])
-                date = int(datetime.datetime(year, month, day, 12, 0).timestamp())
+                except ValueError:
+                    print('ValueError')
+                    print(file)
+                    asd
 
                 joined.append(date)
 

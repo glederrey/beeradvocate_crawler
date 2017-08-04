@@ -84,11 +84,14 @@ We give here the table with the different number of objects you can find in the 
 12. Get (**Parse**) the users from the file (*ratings.txt.gz*) and save them in the CSV file (*users.csv*)
 13. **Crawl** all the users 
 14. **Parse** all the users to get some information and update the CSV (*users.csv*)
+15. **Crawl** the users who have put a restriction on their profile with the cookies of the connection with an account.
+(!!! Needs to be done on a personal computer and you need an account on BeerAdvocate and get the cookies !!!)
+16. **Parse** the users who have been crawled with the cookies and update the CSV (*users.csv*)
 
 ## Dates of crawling
 
 The places, the breweries and the beers have been crawled between the 25th of July and the 1st of August 2017. 
-The users have been crawled between the 2nd and the 3rd of August 2017.
+The users have been crawled between the 2nd and the 4th of August 2017.
 
 ## Required packages
 

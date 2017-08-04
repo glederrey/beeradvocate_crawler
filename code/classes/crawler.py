@@ -461,29 +461,58 @@ class Crawler:
         for i in df.index:
             row = df.ix[i]
 
-            file = str(row['user_id']) + '.html'
+            # Get the url
+            url = 'https://www.beeradvocate.com/community/members/{}/'.format(row['user_id'])
 
-            # Open the file
-            html_txt = open(folder + file, 'rb').read().decode('utf-8')
+            # Crawl the user's page
+            r = self.request_and_wait(url)
 
-            if "This user's profile is not available." in html_txt \
-                    or 'This member limits who may view their full profile.' in html_txt \
-                    or 'An unexpected error occurred.' in html_txt:
+            # Save it
+            with open(folder + str(row['user_id']) + '.html', 'wb') as output:
+                output.write(r.content)
 
-                # Get the url
-                url = 'https://www.beeradvocate.com/community/members/{}/'.format(row['user_id'])
+    ########################################################################################
+    ##                                                                                    ##
+    ##                              Crawl all the users                                   ##
+    ##                                                                                    ##
+    ########################################################################################
 
-                # cookies
-                cookies = dict(xf_session="0ce9764fc5c68bbbf7f258ef233c7a74", OX_plg="pm", OX_sd="1",
-                               __cfduid="decaf5d8d30f4fce5c2afd076a806a7501501757826", _ga="GA1.3.804066691.1501757842",
-                               _gat="1", _gid="GA1.3.1441985684.1501858687")
+    def crawl_users_with_cookies(self):
+        """
+        STEP 15
 
-                # Crawl the user's page
-                r = self.request_and_wait(url, cookies)
+        Crawl all the users who have rated the beers.
 
-                # Save it
-                with open(folder + str(row['user_id']) + '.html', 'wb') as output:
-                    output.write(r.content)
+        !!! Make sure steps 14 were done with the parser !!!
+        """
+
+        # Load the DF of users
+        df = pd.read_csv(self.data_folder + 'parsed/users.csv')
+
+        df = df[df['joined'] == 'MANUAL_CHECK']
+
+        # cookies !!! You may have to change them according to your browser !!!
+        cookies = dict(xf_session="0ce9764fc5c68bbbf7f258ef233c7a74", OX_plg="pm", OX_sd="1",
+                       __cfduid="decaf5d8d30f4fce5c2afd076a806a7501501757826", _ga="GA1.3.804066691.1501757842",
+                       _gat="1", _gid="GA1.3.1441985684.1501858687")
+
+        # Create folder for all the HTML pages
+        folder = self.data_folder + 'users/'
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+
+        for i in df.index:
+            row = df.ix[i]
+
+            # Get the url
+            url = 'https://www.beeradvocate.com/community/members/{}/'.format(row['user_id'])
+
+            # Crawl the user's page
+            r = self.request_and_wait(url, cookies)
+
+            # Save it
+            with open(folder + str(row['user_id']) + '.html', 'wb') as output:
+                output.write(r.content)
 
     ########################################################################################
     ##                                                                                    ##

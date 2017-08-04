@@ -793,88 +793,169 @@ class Parser:
             # Open the file
             html_txt = open(folder + file, 'rb').read().decode('utf-8')
 
-            if "This user's profile is not available." in html_txt \
-                    or 'This member limits who may view their full profile.' in html_txt \
-                    or 'An unexpected error occurred.' in html_txt:
+            if "This user's profile is not available." in html_txt:
                 location.append(np.nan)
                 joined.append(np.nan)
+            elif 'This member limits who may view their full profile.' in html_txt \
+                    or 'An unexpected error occurred.' in html_txt:
+
+                location.append('MANUAL_CHECK')
+                joined.append('MANUAL_CHECK')
             else:
 
-                # Get the joining date
-                str_ = '<dt>Joined:</dt><dd>(.+?)</dd></dl>'
+                loc, join_date = self.get_user_info(folder, file, html_txt)
 
-                grp = re.search(str_, html_txt.replace('\n', '').replace('\t', ''))
-                try:
-                    str_date = grp.group(1).replace(',', '')
-
-                    # Transform into epoch
-                    month = time.strptime(str_date.split(' ')[0], '%b').tm_mon
-                    day = int(str_date.split(' ')[1])
-                    year = int(str_date.split(' ')[2])
-
-                except ValueError:
-                    # Get last time when the file was modified
-                    last_modified = os.path.getmtime(folder + file)
-
-                    # Get the day of the week when the file was last modified
-                    dt = datetime.datetime.fromtimestamp(last_modified)
-
-                    # Get the weekday in the profile of the user
-                    weekday = grp.group(1)
-                    if weekday == 'Yesterday':
-                        delta = 1
-                    elif weekday == 'Today':
-                        delta = 0
-                    else:
-                        day_nbr = self.day_to_nbr[weekday]
-
-                        this_day_nbr = dt.weekday()
-
-                        # Compute difference (modulo 7 days)
-                        if day_nbr > this_day_nbr:
-                            delta = this_day_nbr + 7 - day_nbr
-                        else:
-                            delta = this_day_nbr - day_nbr
-
-                    # Get the day when it was posted
-                    day_posted = dt - datetime.timedelta(days=delta)
-                    year = day_posted.year
-                    month = day_posted.month
-                    day = day_posted.day
-
-                date = int(datetime.datetime(year, month, day, 12, 0).timestamp())
-
-                joined.append(date)
-
-                # Get the location
-                str_ = 'target="_blank" rel="nofollow" itemprop="address" class="concealed">([^<]*)</a></dd></dl>'
-
-                grp = re.search(str_, html_txt)
-
-                try:
-                    place = grp.group(1)
-
-                    if place == 'District of Columbia':
-                        place = 'Washington'
-
-                    # Add United States if it's a state from the US
-                    if place in self.us_states:
-                        place = 'United States, ' + place
-
-                    # For Canada and UK, the region is given first
-                    if '(' in place and ')' in place:
-                        place = place.split('(')[1].split(')')[0]
-
-                    # Change to conventional name
-                    if place in self.country_to_change.keys():
-                        place = self.country_to_change[place]
-
-                    location.append(place)
-                except AttributeError:
-                    location.append(np.nan)
+                location.append(loc)
+                joined.append(join_date)
 
         df.loc[:, 'joined'] = joined
         df.loc[:, 'location'] = location
 
         # Save the CSV again
         df.to_csv(self.data_folder + 'parsed/users.csv', index=False)
+
+    ########################################################################################
+    ##                                                                                    ##
+    ##               Parse the remaining user page to get some information                ##
+    ##                                                                                    ##
+    ########################################################################################
+
+    def parse_users_crawler_with_cookies(self):
+        """
+        STEP 16
+
+        Parse all the users to get some information
+
+        !!! Make sure step 15 was done with the crawler !!!
+        """
+
+        # Load the DF of users
+        df = pd.read_csv(self.data_folder + 'parsed/users.csv')
+
+        location = []
+        joined = []
+
+        folder = self.data_folder + 'users/'
+
+        for i in df.index:
+            row = df.ix[i]
+
+            if row['location'] != 'MANUAL_CHECK':
+                location.append(row['location'])
+                joined.append(row['joined'])
+            else:
+                file = str(row['user_id']) + '.html'
+
+                # Open the file
+                html_txt = open(folder + file, 'rb').read().decode('utf-8')
+
+                # Check if file is still not good
+                if 'This member limits who may view their full profile.' in html_txt \
+                        or 'An unexpected error occurred.' in html_txt:
+                    location.append(np.nan)
+                    joined.append(np.nan)
+                else:
+                    # Otherwise, parse and add new values
+                    loc, join_date = self.get_user_info(folder, file, html_txt)
+
+                    location.append(loc)
+                    joined.append(join_date)
+
+                df.loc[:, 'joined'] = joined
+                df.loc[:, 'location'] = location
+
+                # Save the CSV again
+                df.to_csv(self.data_folder + 'parsed/users.csv', index=False)
+
+    ########################################################################################
+    ##                                                                                    ##
+    ##                              Additional functions                                  ##
+    ##                                                                                    ##
+    ########################################################################################
+
+    def get_user_info(self, folder, file, html_txt):
+        """
+        USED BY STEP 14 AND 16
+
+        Parse the user page and return the location and joining date
+
+        :param folder: folder for the user pages
+        :param file: file for this particular user
+        :param html_txt: HTML as a txt format
+        :return: location and joining date
+        """
+
+        # Get the joining date
+        str_ = '<dt>Joined:</dt><dd>(.+?)</dd></dl>'
+
+        grp = re.search(str_, html_txt.replace('\n', '').replace('\t', ''))
+        try:
+            str_date = grp.group(1).replace(',', '')
+
+            # Transform into epoch
+            month = time.strptime(str_date.split(' ')[0], '%b').tm_mon
+            day = int(str_date.split(' ')[1])
+            year = int(str_date.split(' ')[2])
+
+        except ValueError:
+            # Get last time when the file was modified
+            last_modified = os.path.getmtime(folder + file)
+
+            # Get the day of the week when the file was last modified
+            dt = datetime.datetime.fromtimestamp(last_modified)
+
+            # Get the weekday in the profile of the user
+            weekday = grp.group(1)
+            if weekday == 'Yesterday':
+                delta = 1
+            elif weekday == 'Today':
+                delta = 0
+            else:
+                day_nbr = self.day_to_nbr[weekday]
+
+                this_day_nbr = dt.weekday()
+
+                # Compute difference (modulo 7 days)
+                if day_nbr > this_day_nbr:
+                    delta = this_day_nbr + 7 - day_nbr
+                else:
+                    delta = this_day_nbr - day_nbr
+
+            # Get the day when it was posted
+            day_posted = dt - datetime.timedelta(days=delta)
+            year = day_posted.year
+            month = day_posted.month
+            day = day_posted.day
+
+        date = int(datetime.datetime(year, month, day, 12, 0).timestamp())
+
+        join_date = date
+
+        # Get the location
+        str_ = 'target="_blank" rel="nofollow" itemprop="address" class="concealed">([^<]*)</a></dd></dl>'
+
+        grp = re.search(str_, html_txt)
+
+        try:
+            place = grp.group(1)
+
+            if place == 'District of Columbia':
+                place = 'Washington'
+
+            # Add United States if it's a state from the US
+            if place in self.us_states:
+                place = 'United States, ' + place
+
+            # For Canada and UK, the region is given first
+            if '(' in place and ')' in place:
+                place = place.split('(')[1].split(')')[0]
+
+            # Change to conventional name
+            if place in self.country_to_change.keys():
+                place = self.country_to_change[place]
+
+            loc = place
+        except AttributeError:
+            loc = np.nan
+
+        return loc, join_date

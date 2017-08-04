@@ -464,8 +464,13 @@ class Crawler:
             # Get the url
             url = 'https://www.beeradvocate.com/community/members/{}/'.format(row['user_id'])
 
+            # cookies
+            cookies = dict(xf_session="2be9f4039d028d137350d0bb2e6c9d9c", OX_plg="pm", OX_sd="1",
+                           __cfduid="decaf5d8d30f4fce5c2afd076a806a7501501757826", _ga="GA1.3.804066691.1501757842",
+                           _gat="1", _gid="GA1.3.1441985684.1501858687")
+
             # Crawl the user's page
-            r = self.request_and_wait(url)
+            r = self.request_and_wait(url, cookies)
 
             # Save it
             with open(folder + str(row['user_id']) + '.html', 'wb') as output:
@@ -477,11 +482,12 @@ class Crawler:
     ##                                                                                    ##
     ########################################################################################
 
-    def request_and_wait(self, url):
+    def request_and_wait(self, url, cookies=None):
         """
         Run the function get from the package requests, then wait a certain amount of time.
 
         :param url: url for the requests
+        :param cookies: cookies
         :return r: the request
         """
 
@@ -491,7 +497,7 @@ class Crawler:
         start = time.time()
 
         # Run the function
-        r = requests.get(url)
+        r = requests.get(url, cookies=cookies)
 
         elapsed = time.time()-start
 

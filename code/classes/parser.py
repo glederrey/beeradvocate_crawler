@@ -793,13 +793,11 @@ class Parser:
             # Open the file
             html_txt = open(folder + file, 'rb').read().decode('utf-8')
 
-            if "This user's profile is not available." in html_txt:
+            if "This user's profile is not available." in html_txt \
+                    or 'This member limits who may view their full profile.' in html_txt \
+                    or 'An unexpected error occurred.' in html_txt:
                 location.append(np.nan)
                 joined.append(np.nan)
-            elif 'This member limits who may view their full profile.' in html_txt or \
-                            'An unexpected error occurred.' in html_txt:
-                location.append('MANUAL_CHECK')
-                joined.append('MANUAL_CHECK')
             else:
 
                 # Get the joining date
@@ -814,10 +812,6 @@ class Parser:
                     day = int(str_date.split(' ')[1])
                     year = int(str_date.split(' ')[2])
 
-                except AttributeError:
-                    print('AttributeError')
-                    print(file)
-                    asd
                 except ValueError:
                     # Get last time when the file was modified
                     last_modified = os.path.getmtime(folder + file)
@@ -848,8 +842,6 @@ class Parser:
                     month = day_posted.month
                     day = day_posted.day
 
-                    print(int(datetime.datetime(year, month, day, 12, 0).timestamp()))
-
                 date = int(datetime.datetime(year, month, day, 12, 0).timestamp())
 
                 joined.append(date)
@@ -861,6 +853,9 @@ class Parser:
 
                 try:
                     place = grp.group(1)
+
+                    if place == 'District of Columbia':
+                        place = 'Washington'
 
                     # Add United States if it's a state from the US
                     if place in self.us_states:

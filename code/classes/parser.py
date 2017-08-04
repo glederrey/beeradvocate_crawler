@@ -813,16 +813,44 @@ class Parser:
                     month = time.strptime(str_date.split(' ')[0], '%b').tm_mon
                     day = int(str_date.split(' ')[1])
                     year = int(str_date.split(' ')[2])
-                    date = int(datetime.datetime(year, month, day, 12, 0).timestamp())
 
                 except AttributeError:
                     print('AttributeError')
                     print(file)
                     asd
                 except ValueError:
-                    print('ValueError')
-                    print(file)
-                    asd
+                    # Get last time when the file was modified
+                    last_modified = os.path.getmtime(folder + file)
+
+                    # Get the day of the week when the file was last modified
+                    dt = datetime.datetime.fromtimestamp(last_modified)
+
+                    # Get the weekday in the profile of the user
+                    weekday = grp.group(1)
+                    if weekday == 'Yesterday':
+                        delta = 1
+                    elif weekday == 'Today':
+                        delta = 0
+                    else:
+                        day_nbr = self.day_to_nbr[weekday]
+
+                        this_day_nbr = dt.weekday()
+
+                        # Compute difference (modulo 7 days)
+                        if day_nbr > this_day_nbr:
+                            delta = this_day_nbr + 7 - day_nbr
+                        else:
+                            delta = this_day_nbr - day_nbr
+
+                    # Get the day when it was posted
+                    day_posted = dt - datetime.timedelta(days=delta)
+                    year = day_posted.year
+                    month = day_posted.month
+                    day = day_posted.day
+
+                    print(int(datetime.datetime(year, month, day, 12, 0).timestamp()))
+
+                date = int(datetime.datetime(year, month, day, 12, 0).timestamp())
 
                 joined.append(date)
 

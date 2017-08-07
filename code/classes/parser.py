@@ -945,6 +945,8 @@ class Parser:
         try:
             place = grp.group(1)
 
+            place = place.replace('&amp;', '&')
+
             if place == 'District of Columbia':
                 place = 'Washington'
 
@@ -960,7 +962,7 @@ class Parser:
             if place in self.country_to_change.keys():
                 place = self.country_to_change[place]
 
-            if place == 'U.S.' or place == 'British':
+            if place == 'U.S.' or place == 'British' or place == 'South':
                 place = np.nan
 
             loc = place

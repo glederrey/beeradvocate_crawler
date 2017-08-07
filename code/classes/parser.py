@@ -46,7 +46,14 @@ class Parser:
                                   'Saint Vincent & The Grenadines': 'Saint Vincent and The Grenadines',
                                   'Sao Tome & Principe': 'Sao Tome and Principe',
                                   'Turks & Caicos Islands': 'Turks and Caicos Islands',
-                                  'Viet Nam': 'Vietnam'}
+                                  'Viet Nam': 'Vietnam',
+                                  'Heard & McDonald Islands': 'Heard and McDonald Islands',
+                                  'Bosnia & Herzegovina': 'Bosnia and Herzegovina',
+                                  'Antigua & Barbuda': 'Antigua and Barbuda',
+                                  'S. Georgia & S. Sandwich Isls.': 'South Georgia and South Sandwich Islands',
+                                  'Svalbard & Jan Mayen Islands': 'Svalbard and Jan Mayen Islands',
+                                  'Trinidad & Tobago': 'Trinidad and Tobago',
+                                  'Hrvatska': 'Croatia'}
 
         self.day_to_nbr = {'Monday': 0,
                            'Tuesday': 1,
@@ -952,6 +959,9 @@ class Parser:
             # Change to conventional name
             if place in self.country_to_change.keys():
                 place = self.country_to_change[place]
+
+            if place == 'U.S.' or place == 'British':
+                place = np.nan
 
             loc = place
         except AttributeError:

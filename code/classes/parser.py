@@ -860,11 +860,11 @@ class Parser:
                     location.append(loc)
                     joined.append(join_date)
 
-                df.loc[:, 'joined'] = joined
-                df.loc[:, 'location'] = location
+        df.loc[:, 'joined'] = joined
+        df.loc[:, 'location'] = location
 
-                # Save the CSV again
-                df.to_csv(self.data_folder + 'parsed/users.csv', index=False)
+        # Save the CSV again
+        df.to_csv(self.data_folder + 'parsed/users.csv', index=False)
 
     ########################################################################################
     ##                                                                                    ##

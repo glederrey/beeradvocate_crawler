@@ -18,6 +18,7 @@ After running the code, you will get a folder called `data` with several subfold
 - `beers` contains all the pages of all the beers. Inside this folder, you will find all the folders
  from all the breweries. Inside the breweries folders, you will find the folders for all the beers 
  from this given brewery. Inside the beers folders, you will find the HTML pages with all the reviews.
+- `users` contains all the pages of all the users. 
 - `parsed` **contains all the parsed data**. In particular, it contains the files: 
  *breweries.csv*, *beers.csv*, *users.csv*, *ratings.txt.gz*, and *reviews.txt.gz*.
 
